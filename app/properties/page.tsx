@@ -299,7 +299,7 @@ function PropertiesContent() {
                                         )}
                                     </div>
 
-                                    <div className="mt-6">
+                                    <div className="mt-auto pt-4">
                                         <Link href={`/property/${property.id}`}>
                                             <Button className="w-full bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600">
                                                 View Details
