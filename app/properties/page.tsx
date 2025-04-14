@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
@@ -38,6 +38,50 @@ interface Pagination {
 }
 
 export default function Properties() {
+    return (
+        <Suspense fallback={<PropertiesLoading />}>
+            <PropertiesContent />
+        </Suspense>
+    );
+}
+
+function PropertiesLoading() {
+    return (
+        <div className="container mx-auto py-12 px-4">
+            <div className="w-full max-w-3xl mx-auto mb-12">
+                <div className="relative">
+                    <Skeleton className="h-16 w-full rounded-full" />
+                </div>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                {Array.from({ length: 6 }).map((_, index) => (
+                    <Card key={index} className="overflow-hidden">
+                        <div className="relative h-56 w-full">
+                            <Skeleton className="h-full w-full" />
+                        </div>
+                        <div className="p-5 flex flex-col h-64">
+                            <Skeleton className="h-4 w-2/3 mb-2" />
+                            <Skeleton className="h-6 w-3/4 mb-2" />
+                            <Skeleton className="h-6 w-1/3 mb-4" />
+
+                            <div className="flex justify-between mb-4">
+                                <Skeleton className="h-4 w-16" />
+                                <Skeleton className="h-4 w-16" />
+                                <Skeleton className="h-4 w-16" />
+                            </div>
+
+                            <div className="mt-auto">
+                                <Skeleton className="h-10 w-full" />
+                            </div>
+                        </div>
+                    </Card>
+                ))}
+            </div>
+        </div>
+    );
+}
+
+function PropertiesContent() {
     const searchParams = useSearchParams();
     const router = useRouter();
     const [properties, setProperties] = useState<Property[]>([]);
@@ -250,14 +294,16 @@ export default function Properties() {
                                         {property.property_floor && parseInt(property.property_floor) > 0 && (
                                             <span className="flex items-center">
                                                 <Maximize className="w-4 h-4 mr-1" />
-                                                {property.property_floor} sqm
+                                                {property.property_floor} m²
                                             </span>
                                         )}
                                     </div>
 
-                                    <div className="mt-auto pt-5">
+                                    <div className="mt-6">
                                         <Link href={`/property/${property.id}`}>
-                                            <Button className="w-full bg-blue-600 hover:bg-blue-700">View Details</Button>
+                                            <Button className="w-full bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600">
+                                                View Details
+                                            </Button>
                                         </Link>
                                     </div>
                                 </div>
@@ -265,72 +311,32 @@ export default function Properties() {
                         ))}
                     </div>
 
-                    {/* Pagination */}
+                    {/* Pagination Controls */}
                     {pagination && pagination.totalPages > 1 && (
-                        <div className="mt-12 flex justify-center">
-                            <div className="flex items-center space-x-2">
-                                {pagination.hasPrevPage && (
-                                    <Link href={getPageUrl(currentPage - 1)}>
-                                        <Button
-                                            variant="outline"
-                                            className="flex items-center"
-                                        >
-                                            <ChevronLeft className="h-4 w-4 mr-1" />
-                                            Previous
-                                        </Button>
-                                    </Link>
-                                )}
+                        <div className="flex justify-center mt-12 space-x-2">
+                            {pagination.hasPrevPage && (
+                                <Link href={getPageUrl(pagination.page - 1)}>
+                                    <Button variant="outline" className="flex items-center gap-2">
+                                        <ChevronLeft className="w-4 h-4" />
+                                        Previous
+                                    </Button>
+                                </Link>
+                            )}
 
-                                <div className="flex space-x-1">
-                                    {Array.from({ length: pagination.totalPages }, (_, i) => i + 1)
-                                        .filter(page => {
-                                            // Always show first page, last page, current page, and pages around current
-                                            return (
-                                                page === 1 ||
-                                                page === pagination.totalPages ||
-                                                Math.abs(page - currentPage) <= 1
-                                            );
-                                        })
-                                        .map((page, index, array) => {
-                                            // Add ellipsis between non-consecutive numbers
-                                            const showEllipsisBefore = index > 0 && array[index - 1] !== page - 1;
-                                            const showEllipsisAfter = index < array.length - 1 && array[index + 1] !== page + 1;
-
-                                            return (
-                                                <div key={page} className="flex items-center">
-                                                    {showEllipsisBefore && (
-                                                        <span className="px-3 py-2">...</span>
-                                                    )}
-
-                                                    <Link href={getPageUrl(page)}>
-                                                        <Button
-                                                            variant={currentPage === page ? "default" : "outline"}
-                                                            className={`w-10 h-10 p-0 ${currentPage === page ? 'bg-blue-600' : ''}`}
-                                                        >
-                                                            {page}
-                                                        </Button>
-                                                    </Link>
-
-                                                    {showEllipsisAfter && (
-                                                        <span className="px-3 py-2">...</span>
-                                                    )}
-                                                </div>
-                                            );
-                                        })}
-                                </div>
-
-                                {pagination.hasNextPage && (
-                                    <Link href={getPageUrl(currentPage + 1)}>
-                                        <Button
-                                            variant="outline"
-                                            className="flex items-center"
-                                        >
-                                            Next
-                                            <ChevronRight className="h-4 w-4 ml-1" />
-                                        </Button>
-                                    </Link>
-                                )}
+                            <div className="flex items-center px-4">
+                                <span className="text-gray-600">
+                                    Page {pagination.page} of {pagination.totalPages}
+                                </span>
                             </div>
+
+                            {pagination.hasNextPage && (
+                                <Link href={getPageUrl(pagination.page + 1)}>
+                                    <Button variant="outline" className="flex items-center gap-2">
+                                        Next
+                                        <ChevronRight className="w-4 h-4" />
+                                    </Button>
+                                </Link>
+                            )}
                         </div>
                     )}
                 </>
