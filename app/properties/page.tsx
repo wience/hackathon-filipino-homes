@@ -65,7 +65,7 @@ export default function Properties() {
                 // Determine if we should call search API or regular properties API
                 let url;
                 if (searchQuery) {
-                    url = `/api/search?q=${encodeURIComponent(searchQuery)}&limit=12`;
+                    url = `/api/semantic-search?q=${encodeURIComponent(searchQuery)}&limit=12`;
                 } else {
                     url = `/api/properties?page=${currentPage}&limit=12`;
                 }
