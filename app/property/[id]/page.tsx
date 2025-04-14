@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Image from "next/image";
 import { MapPin, Home, Bath, Maximize, Calendar, ArrowLeft, Phone, Mail, Heart, Share2, ChevronLeft, ChevronRight } from "lucide-react";
@@ -9,6 +9,9 @@ import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import * as THREE from "three";
+// @ts-ignore
+import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 
 interface Property {
     id: number;
@@ -35,6 +38,58 @@ interface Property {
     };
 }
 
+// Hardcoded properties with panorama
+const PANORAMA_PROPERTIES = {
+    1: {
+        id: 1,
+        property_name: "Modern Living Room with Panoramic View",
+        property_price: "5000000",
+        property_address: "123 Panorama Street, Manila",
+        property_bedroom: "3",
+        property_bathroom: "2",
+        property_floor: "150",
+        property_type: "Residential",
+        property_subtype: "Condominium",
+        property_featured_photo: "/images/panorama-living-room.jpg",
+        property_photos_url: "[]",
+        property_description: "Experience this stunning modern living room in 360° view. The space features contemporary design with ample natural light and premium finishes.",
+        category: {
+            property_category_name: "Luxury"
+        },
+        property_date_listed: "2024-04-14",
+        user: {
+            name: "John Doe",
+            email: "john@example.com",
+            phone: "+63 912 345 6789",
+            photo: "https://via.placeholder.com/100"
+        }
+    },
+    2: {
+        id: 2,
+        property_name: "Modern Empty Interior with Panoramic View",
+        property_price: "4500000",
+        property_address: "456 Modern Avenue, Makati",
+        property_bedroom: "2",
+        property_bathroom: "2",
+        property_floor: "120",
+        property_type: "Residential",
+        property_subtype: "Condominium",
+        property_featured_photo: "/images/empty-modern-room.jpg",
+        property_photos_url: "[]",
+        property_description: "A modern empty interior space perfect for customization. Features clean lines, abundant natural light, and a contemporary design aesthetic.",
+        category: {
+            property_category_name: "Modern"
+        },
+        property_date_listed: "2024-04-14",
+        user: {
+            name: "Jane Smith",
+            email: "jane@example.com",
+            phone: "+63 917 654 3210",
+            photo: "https://via.placeholder.com/100"
+        }
+    }
+};
+
 export default function PropertyDetail() {
     const params = useParams();
     const router = useRouter();
@@ -44,6 +99,11 @@ export default function PropertyDetail() {
     const [selectedImageIndex, setSelectedImageIndex] = useState(0);
     const [photos, setPhotos] = useState<string[]>([]);
     const [favorite, setFavorite] = useState(false);
+    const containerRef = useRef<HTMLDivElement>(null);
+    const sceneRef = useRef<THREE.Scene | null>(null);
+    const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
+    const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
+    const controlsRef = useRef<OrbitControls | null>(null);
 
     // Format currency
     const formatCurrency = (amount: string) => {
@@ -57,11 +117,21 @@ export default function PropertyDetail() {
 
     useEffect(() => {
         const fetchProperty = async () => {
-            if (!params.id) return;
+            if (!params.id || Array.isArray(params.id)) return;
 
             setIsLoading(true);
 
             try {
+                // If it's a panorama property, use hardcoded data
+                const propertyId = parseInt(params.id);
+                if (propertyId === 1 || propertyId === 2) {
+                    const property = PANORAMA_PROPERTIES[propertyId as keyof typeof PANORAMA_PROPERTIES];
+                    setProperty(property);
+                    setPhotos([property.property_featured_photo]);
+                    setIsLoading(false);
+                    return;
+                }
+
                 const response = await fetch(`/api/property/${params.id}`);
 
                 if (!response.ok) {
@@ -77,7 +147,6 @@ export default function PropertyDetail() {
                         const parsedPhotos = JSON.parse(data.property.property_photos_url);
                         setPhotos(Array.isArray(parsedPhotos) ? parsedPhotos : [data.property.property_featured_photo]);
                     } catch (e) {
-                        // If parsing fails, use featured photo
                         setPhotos([data.property.property_featured_photo]);
                     }
                 } else {
@@ -93,6 +162,101 @@ export default function PropertyDetail() {
 
         fetchProperty();
     }, [params.id]);
+
+    useEffect(() => {
+        if (!containerRef.current) return;
+
+        // Create scene
+        const scene = new THREE.Scene();
+        sceneRef.current = scene;
+
+        // Create camera
+        const camera = new THREE.PerspectiveCamera(
+            75,
+            window.innerWidth / window.innerHeight,
+            0.1,
+            1000
+        );
+        camera.position.z = 1;
+        cameraRef.current = camera;
+
+        // Create renderer
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(containerRef.current.clientWidth, containerRef.current.clientHeight);
+        containerRef.current.appendChild(renderer.domElement);
+        rendererRef.current = renderer;
+
+        // Create controls
+        const controls = new OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.05;
+        controls.enableZoom = false;
+        controlsRef.current = controls;
+
+        // Create sphere geometry
+        const geometry = new THREE.SphereGeometry(1, 60, 40);
+        geometry.scale(-1, 1, 1);
+
+        // Load texture
+        const textureLoader = new THREE.TextureLoader();
+        const imageUrl = property?.property_featured_photo || "";
+        console.log("Loading texture from:", imageUrl);
+
+        textureLoader.load(
+            imageUrl,
+            (texture: THREE.Texture) => {
+                console.log("Texture loaded successfully");
+                const material = new THREE.MeshBasicMaterial({
+                    map: texture,
+                    side: THREE.DoubleSide
+                });
+                const sphere = new THREE.Mesh(geometry, material);
+                scene.add(sphere);
+            },
+            undefined,
+            (error) => {
+                console.error("Error loading texture:", error);
+            }
+        );
+
+        // Handle window resize
+        const handleResize = () => {
+            if (!cameraRef.current || !rendererRef.current || !containerRef.current) return;
+
+            const width = containerRef.current.clientWidth;
+            const height = containerRef.current.clientHeight;
+
+            cameraRef.current.aspect = width / height;
+            cameraRef.current.updateProjectionMatrix();
+            rendererRef.current.setSize(width, height);
+        };
+
+        window.addEventListener("resize", handleResize);
+
+        // Animation loop
+        const animate = () => {
+            requestAnimationFrame(animate);
+            if (controlsRef.current) {
+                controlsRef.current.update();
+            }
+            if (rendererRef.current && sceneRef.current && cameraRef.current) {
+                rendererRef.current.render(sceneRef.current, cameraRef.current);
+            }
+        };
+
+        animate();
+
+        // Cleanup
+        return () => {
+            window.removeEventListener("resize", handleResize);
+            if (containerRef.current && rendererRef.current) {
+                containerRef.current.removeChild(rendererRef.current.domElement);
+            }
+            if (rendererRef.current) {
+                rendererRef.current.dispose();
+            }
+        };
+    }, [property]);
 
     const navigateImages = (direction: 'next' | 'prev') => {
         if (direction === 'next') {
@@ -291,16 +455,20 @@ export default function PropertyDetail() {
                         <Card className="overflow-hidden">
                             {/* Main Image */}
                             <div className="relative h-[500px] overflow-hidden group">
-                                <Image
-                                    src={photos[selectedImageIndex] || property.property_featured_photo}
-                                    alt={property.property_name}
-                                    fill
-                                    style={{ objectFit: "cover" }}
-                                    className="transition-transform duration-500 group-hover:scale-105"
-                                />
+                                {(params.id === "1" || params.id === "2") ? (
+                                    <div className="h-[500px] w-full" ref={containerRef} />
+                                ) : (
+                                    <Image
+                                        src={photos[selectedImageIndex] || property?.property_featured_photo || ""}
+                                        alt={property?.property_name || ""}
+                                        fill
+                                        style={{ objectFit: "cover" }}
+                                        className="transition-transform duration-500 group-hover:scale-105"
+                                    />
+                                )}
 
-                                {/* Image Navigation */}
-                                {photos.length > 1 && (
+                                {/* Image Navigation - Only show for non-panorama properties */}
+                                {params.id !== "1" && params.id !== "2" && photos.length > 1 && (
                                     <>
                                         <Button
                                             variant="secondary"
@@ -318,17 +486,6 @@ export default function PropertyDetail() {
                                         >
                                             <ChevronRight />
                                         </Button>
-                                        <div className="absolute bottom-4 left-1/2 -translate-x-1/2">
-                                            <div className="flex items-center gap-1.5 bg-black/60 rounded-full px-3 py-1.5">
-                                                {photos.map((_, index) => (
-                                                    <div
-                                                        key={index}
-                                                        className={`w-2 h-2 rounded-full cursor-pointer ${index === selectedImageIndex ? 'bg-white' : 'bg-white/50'}`}
-                                                        onClick={() => setSelectedImageIndex(index)}
-                                                    />
-                                                ))}
-                                            </div>
-                                        </div>
                                     </>
                                 )}
 
@@ -358,7 +515,7 @@ export default function PropertyDetail() {
                                     {photos.map((photo, index) => (
                                         <div
                                             key={index}
-                                            className={`relative h-20 w-32 flex-shrink-0 cursor-pointer rounded-md overflow-hidden 
+                                            className={`relative h-20 w-32 flex-shrink-0 cursor-pointer rounded-md overflow-hidden
                                                 ${index === selectedImageIndex ? "ring-2 ring-blue-600" : "opacity-70 hover:opacity-100"}`}
                                             onClick={() => setSelectedImageIndex(index)}
                                         >
@@ -508,4 +665,4 @@ export default function PropertyDetail() {
             </div>
         </div>
     );
-} 
+}
