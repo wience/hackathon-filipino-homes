@@ -77,7 +77,6 @@ export default function Home() {
       const data = await response.json();
 
       // For now, just redirect to properties page with the search query
-      // In a real implementation, you would display the results or redirect to a results page
       router.push(`/properties?search=${encodeURIComponent(searchQuery)}`);
     } catch (error) {
       console.error("Error processing search:", error);

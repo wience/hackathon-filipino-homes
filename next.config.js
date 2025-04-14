@@ -4,6 +4,10 @@ const nextConfig = {
     remotePatterns: [
       {
         protocol: "https",
+        hostname: "**", // Allow all domains
+      },
+      {
+        protocol: "https",
         hostname: "images.unsplash.com",
       },
       {
@@ -23,6 +27,8 @@ const nextConfig = {
         hostname: "api.leuteriorealty.com",
       },
     ],
+    // Alternative option if remotePatterns doesn't work:
+    // unoptimized: true, // Skip image optimization
     domains: ["maps.googleapis.com"],
   },
 };
