@@ -128,6 +128,8 @@ function PropertiesContent() {
 
                 const data = await response.json();
 
+                console.log(data)
+
                 // Handle different response structures
                 if (urlSearchQuery) {
                     // Handle search results format

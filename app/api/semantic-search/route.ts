@@ -90,6 +90,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
                     property_subtype: 1,
                     property_featured_photo: 1,
                     property_photos_url: 1,
+                    property_location_geo_coordinates: 1,
                     category: 1,
                     score: { $meta: "vectorSearchScore" }
                 }
@@ -195,6 +196,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
                         property_subtype: 1,
                         property_featured_photo: 1,
                         property_photos_url: 1,
+                        property_location_geo_coordinates: 1,
                         category: 1,
                         score: { $meta: "vectorSearchScore" }
                     }

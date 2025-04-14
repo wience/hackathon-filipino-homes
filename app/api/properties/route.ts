@@ -48,6 +48,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
                 property_type: 1,
                 property_subtype: 1,
                 property_featured_photo: 1,
+                property_location_geo_coordinates: 1,
                 category: {
                     property_category_name: 1
                 },
