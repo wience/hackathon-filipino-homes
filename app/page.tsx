@@ -68,7 +68,7 @@ export default function Home() {
     setIsLoading(true);
     try {
       // Use our semantic search API endpoint
-      const response = await fetch(`/api/search?q=${encodeURIComponent(searchQuery)}`);
+      const response = await fetch(`/api/semantic-search?q=${encodeURIComponent(searchQuery)}`);
 
       if (!response.ok) {
         throw new Error(`Search request failed with status: ${response.status}`);

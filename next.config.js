@@ -1,10 +1,14 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   images: {
+    unoptimized: true, // Skip image optimization, allowing ALL domains
+
+    // Keeping these commented for reference if needed later
+    /* 
     remotePatterns: [
       {
         protocol: "https",
-        hostname: "**", // Allow all domains
+        hostname: "**", // This approach wasn't working
       },
       {
         protocol: "https",
@@ -27,9 +31,8 @@ const nextConfig = {
         hostname: "api.leuteriorealty.com",
       },
     ],
-    // Alternative option if remotePatterns doesn't work:
-    // unoptimized: true, // Skip image optimization
-    domains: ["maps.googleapis.com"],
+    domains: ["maps.googleapis.com", "lh3.googleusercontent.com"],
+    */
   },
 };
 

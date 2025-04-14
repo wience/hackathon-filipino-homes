@@ -6,6 +6,8 @@ import Link from "next/link";
 import Image from "next/image";
 import { MapPin, Home, Bath, Maximize, ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 
 // Type for property data
 interface Property {
@@ -122,10 +124,31 @@ export default function Properties() {
             </h1>
 
             {isLoading ? (
-                <div className="flex justify-center items-center min-h-[400px]">
-                    <div className="animate-pulse flex flex-col items-center">
-                        <div className="h-12 w-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-                        <p className="mt-4 text-gray-600">Loading properties...</p>
+                <div>
+                    {/* Skeleton Loading State */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                        {Array.from({ length: 6 }).map((_, index) => (
+                            <Card key={index} className="overflow-hidden">
+                                <div className="relative h-56 w-full">
+                                    <Skeleton className="h-full w-full" />
+                                </div>
+                                <div className="p-5 flex flex-col h-64">
+                                    <Skeleton className="h-4 w-2/3 mb-2" />
+                                    <Skeleton className="h-6 w-3/4 mb-2" />
+                                    <Skeleton className="h-6 w-1/3 mb-4" />
+
+                                    <div className="flex justify-between mb-4">
+                                        <Skeleton className="h-4 w-16" />
+                                        <Skeleton className="h-4 w-16" />
+                                        <Skeleton className="h-4 w-16" />
+                                    </div>
+
+                                    <div className="mt-auto">
+                                        <Skeleton className="h-10 w-full" />
+                                    </div>
+                                </div>
+                            </Card>
+                        ))}
                     </div>
                 </div>
             ) : error ? (
@@ -147,7 +170,7 @@ export default function Properties() {
                         {properties.map((property) => (
                             <div
                                 key={property.id}
-                                className="bg-white rounded-xl overflow-hidden shadow-md hover:shadow-lg transition-shadow duration-300 border border-gray-200"
+                                className="bg-white rounded-xl overflow-hidden shadow-md hover:shadow-lg transition-shadow duration-300 border border-gray-200 flex flex-col"
                             >
                                 <div className="relative h-56 w-full overflow-hidden">
                                     <Image
@@ -162,7 +185,7 @@ export default function Properties() {
                                     </div>
                                 </div>
 
-                                <div className="p-5">
+                                <div className="p-5 flex flex-col flex-grow">
                                     <div className="flex items-center text-sm text-gray-500 mb-2">
                                         <span className="flex items-center">
                                             <MapPin className="w-4 h-4 mr-1 text-blue-500" />
@@ -201,7 +224,7 @@ export default function Properties() {
                                         )}
                                     </div>
 
-                                    <div className="mt-5">
+                                    <div className="mt-auto pt-5">
                                         <Link href={`/property/${property.id}`}>
                                             <Button className="w-full bg-blue-600 hover:bg-blue-700">View Details</Button>
                                         </Link>
