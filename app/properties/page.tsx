@@ -1,13 +1,14 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
-import { MapPin, Home, Bath, Maximize, ChevronLeft, ChevronRight } from "lucide-react";
+import { MapPin, Home, Bath, Maximize, ChevronLeft, ChevronRight, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Input } from "@/components/ui/input";
 
 // Type for property data
 interface Property {
@@ -38,14 +39,16 @@ interface Pagination {
 
 export default function Properties() {
     const searchParams = useSearchParams();
+    const router = useRouter();
     const [properties, setProperties] = useState<Property[]>([]);
     const [pagination, setPagination] = useState<Pagination | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [searchQuery, setSearchQuery] = useState("");
 
     // Get the current page from URL or default to 1
     const currentPage = Number(searchParams.get("page") || 1);
-    const searchQuery = searchParams.get("search") || "";
+    const urlSearchQuery = searchParams.get("search") || "";
 
     // Format currency
     const formatCurrency = (amount: string) => {
@@ -58,14 +61,17 @@ export default function Properties() {
     };
 
     useEffect(() => {
+        // Initialize search input with the URL search query
+        setSearchQuery(urlSearchQuery);
+
         const fetchProperties = async () => {
             setIsLoading(true);
 
             try {
                 // Determine if we should call search API or regular properties API
                 let url;
-                if (searchQuery) {
-                    url = `/api/semantic-search?q=${encodeURIComponent(searchQuery)}&limit=12`;
+                if (urlSearchQuery) {
+                    url = `/api/semantic-search?q=${encodeURIComponent(urlSearchQuery)}&limit=12`;
                 } else {
                     url = `/api/properties?page=${currentPage}&limit=12`;
                 }
@@ -79,7 +85,7 @@ export default function Properties() {
                 const data = await response.json();
 
                 // Handle different response structures
-                if (searchQuery) {
+                if (urlSearchQuery) {
                     // Handle search results format
                     setProperties(data.results || []);
 
@@ -107,21 +113,46 @@ export default function Properties() {
         };
 
         fetchProperties();
-    }, [currentPage, searchQuery]);
+    }, [currentPage, urlSearchQuery]);
 
     // Generate page URL for pagination
     const getPageUrl = (page: number) => {
-        if (searchQuery) {
-            return `/properties?search=${encodeURIComponent(searchQuery)}&page=${page}`;
+        if (urlSearchQuery) {
+            return `/properties?search=${encodeURIComponent(urlSearchQuery)}&page=${page}`;
         }
         return `/properties?page=${page}`;
     };
 
+    // Handle search submission
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!searchQuery.trim()) return;
+
+        // Navigate to properties page with the new search query
+        router.push(`/properties?search=${encodeURIComponent(searchQuery)}`);
+    };
+
     return (
         <div className="container mx-auto py-12 px-4">
-            <h1 className="text-3xl font-bold text-blue-800 mb-8">
-                {searchQuery ? `Search Results for "${searchQuery}"` : "Browse Properties"}
-            </h1>
+            {/* Search Component */}
+            <div className="w-full max-w-3xl mx-auto mb-12">
+                <form onSubmit={handleSubmit} className="relative">
+                    <Search className="absolute left-5 top-1/2 transform -translate-y-1/2 text-blue-600 dark:text-blue-400 h-7 w-7" />
+                    <Input
+                        id="search-query"
+                        placeholder="Search for properties..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="pl-16 pr-40 py-8 text-xl border-2 border-blue-500 dark:border-blue-600 shadow-lg focus:border-blue-600 focus:ring-blue-500 rounded-full dark:bg-gray-800 dark:text-white"
+                    />
+                    <Button
+                        type="submit"
+                        className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 text-white font-bold py-3 px-8 rounded-full transition duration-300 text-lg h-14"
+                    >
+                        Search
+                    </Button>
+                </form>
+            </div>
 
             {isLoading ? (
                 <div>

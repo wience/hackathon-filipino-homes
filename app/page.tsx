@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { Search, Home as HomeIcon, MapPin, Building, Filter } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { motion } from "framer-motion";
 
 export default function Home() {
@@ -104,23 +104,24 @@ export default function Home() {
 
           {/* Simple Search Form */}
           <motion.div
-            className="w-full max-w-2xl mx-auto"
+            className="w-full max-w-4xl mx-auto"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.2 }}
           >
             <form onSubmit={handleSubmit} className="relative">
-              <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-blue-600 dark:text-blue-400 h-6 w-6" />
-              <Input
+              <Search className="absolute left-6 top-8 text-blue-600 dark:text-blue-400 h-8 w-8 z-10" />
+              <Textarea
                 id="search-query"
                 placeholder={placeholderText}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-14 pr-36 py-8 text-lg border-2 border-blue-500 dark:border-blue-600 shadow-lg focus:border-blue-600 focus:ring-blue-500 rounded-full dark:bg-gray-800 dark:text-white placeholder:text-gray-500"
+                className="pl-20 pr-10 py-6 text-xl border-2 border-blue-500 dark:border-blue-600 shadow-xl focus:border-blue-600 focus:ring-blue-500 rounded-3xl dark:bg-gray-800 dark:text-white placeholder:text-gray-500"
+                rows={4}
               />
               <Button
                 type="submit"
-                className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 text-white font-bold py-2 px-6 rounded-full transition duration-300 h-12"
+                className="absolute right-4 bottom-4 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 text-white font-bold py-3 px-8 rounded-full transition duration-300 text-lg"
                 disabled={isLoading || !searchQuery.trim()}
               >
                 {isLoading ? "Searching..." : "Search"}
