@@ -33,12 +33,12 @@ export function Header() {
             <ThemeToggle />
 
             <Link
-              href="/login"
+              href="/profile"
               className="flex items-center gap-2 bg-yellow-100 dark:bg-yellow-800/30 hover:bg-yellow-200 dark:hover:bg-yellow-700/40 rounded-full py-2 px-4 transition-all duration-300 text-yellow-800 dark:text-yellow-400 border border-yellow-200 dark:border-yellow-700"
             >
               <User className="h-4 w-4" />
               <span className="font-medium text-xs hidden sm:inline">
-                Sign In
+                Profile
               </span>
             </Link>
 
