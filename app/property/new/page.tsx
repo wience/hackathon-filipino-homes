@@ -2,8 +2,9 @@
 
 import React from "react";
 import Link from "next/link";
-import { ArrowLeft, Building, Home, MapPin, Save, Upload, X, Loader2, CheckCircle } from "lucide-react";
+import { ArrowLeft, Building, Home, MapPin, Save, Upload, X, Loader2, CheckCircle, CalculatorIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
+import PropertyAppraisalModal from '../../../components/property-appraisal-modal';
 
 export default function NewPropertyPage() {
     const router = useRouter();
@@ -26,6 +27,12 @@ export default function NewPropertyPage() {
         mainImage: "",
         additionalImages: [] as string[]
     });
+
+    // Modal state for appraisal
+    const [showAppraisalModal, setShowAppraisalModal] = React.useState(false);
+    const [appraisalData, setAppraisalData] = React.useState<any>(null);
+    const [isLoadingAppraisal, setIsLoadingAppraisal] = React.useState(false);
+    const [appraisalError, setAppraisalError] = React.useState<string | null>(null);
 
     // Form submission state
     const [isSubmitting, setIsSubmitting] = React.useState(false);
@@ -120,6 +127,53 @@ export default function NewPropertyPage() {
         }
     };
 
+    // Get property appraisal
+    const getAppraisalValue = async () => {
+        setIsLoadingAppraisal(true);
+        setAppraisalError(null);
+
+        try {
+            // Format property data for the appraisal API
+            const propertyDataPrompt = `
+Property Title: ${formData.title}
+Property Type: ${formData.propertyType}
+Listing Type: ${formData.propertySubtype}
+Address: ${formData.address}
+City: ${formData.city}
+Province: ${formData.province}
+Price: PHP ${formData.price}
+Land Size: ${formData.landSize} sqm
+Floor Area: ${formData.floorArea} sqm
+Bedrooms: ${formData.bedrooms}
+Bathrooms: ${formData.bathrooms}
+Garage Spaces: ${formData.garageSpaces}
+Amenities: ${formData.amenities.join(', ')}
+Description: ${formData.description}
+            `;
+
+            const response = await fetch('/api/property/appraisal', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ propertyData: propertyDataPrompt }),
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to get property appraisal');
+            }
+
+            const data = await response.json();
+            setAppraisalData(data);
+            setShowAppraisalModal(true);
+        } catch (error) {
+            console.error('Error getting property appraisal:', error);
+            setAppraisalError('Failed to get property appraisal. Please try again later.');
+        } finally {
+            setIsLoadingAppraisal(false);
+        }
+    };
+
     // Handle form submission
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -163,6 +217,17 @@ export default function NewPropertyPage() {
         }
     };
 
+    // Render the appraisal modal
+    const AppraisalModal = () => {
+        return (
+            <PropertyAppraisalModal
+                isOpen={showAppraisalModal}
+                onClose={() => setShowAppraisalModal(false)}
+                appraisalData={appraisalData}
+            />
+        );
+    };
+
     return (
         <div className="container mx-auto px-4 py-8">
             <div className="max-w-4xl mx-auto">
@@ -186,6 +251,15 @@ export default function NewPropertyPage() {
                                 <X className="h-5 w-5 mr-2" />
                             )}
                             <p>{submitStatus.message}</p>
+                        </div>
+                    </div>
+                )}
+
+                {appraisalError && (
+                    <div className="mb-6 p-4 rounded-lg bg-red-50 dark:bg-red-900/20 text-red-800 dark:text-red-400">
+                        <div className="flex items-center">
+                            <X className="h-5 w-5 mr-2" />
+                            <p>{appraisalError}</p>
                         </div>
                     </div>
                 )}
@@ -580,8 +654,27 @@ export default function NewPropertyPage() {
                                 </div>
                             </div>
 
-                            {/* Submit Button */}
-                            <div className="flex justify-center pt-4">
+                            {/* Submit and Appraisal Buttons */}
+                            <div className="flex justify-center gap-4 pt-4">
+                                <button
+                                    type="button"
+                                    onClick={getAppraisalValue}
+                                    disabled={isLoadingAppraisal}
+                                    className="py-3 px-8 bg-green-600 hover:bg-green-700 text-white font-medium rounded-lg transition-colors duration-300 flex items-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
+                                >
+                                    {isLoadingAppraisal ? (
+                                        <>
+                                            <Loader2 className="h-5 w-5 animate-spin" />
+                                            Processing...
+                                        </>
+                                    ) : (
+                                        <>
+                                            <CalculatorIcon className="h-5 w-5" />
+                                            Get Appraisal Value
+                                        </>
+                                    )}
+                                </button>
+
                                 <button
                                     type="submit"
                                     disabled={isSubmitting}
@@ -604,6 +697,9 @@ export default function NewPropertyPage() {
                     </form>
                 </div>
             </div>
+
+            {/* Render the appraisal modal */}
+            <AppraisalModal />
         </div>
     );
 } 
