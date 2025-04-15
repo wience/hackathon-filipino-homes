@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Image from "next/image";
-import { MapPin, Home, Bath, Maximize, Calendar, ArrowLeft, Phone, Mail, Heart, Share2, ChevronLeft, ChevronRight } from "lucide-react";
+import { MapPin, Home, Bath, Maximize, Calendar, ArrowLeft, Phone, Mail, Heart, Share2, ChevronLeft, ChevronRight, Globe } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
@@ -14,6 +14,7 @@ import MapboxMap from "@/components/MapboxMap";
 import * as THREE from "three";
 // @ts-ignore
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
+import { PanoramaCard } from "@/components/panorama-card";
 
 interface Property {
     id: number;

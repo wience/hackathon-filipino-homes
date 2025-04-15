@@ -4,11 +4,50 @@ import { useState, useEffect, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
-import { MapPin, Home, Bath, Maximize, ChevronLeft, ChevronRight, Search } from "lucide-react";
+import { MapPin, Home, Bath, Maximize, ChevronLeft, ChevronRight, Search, Globe } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
+import { PanoramaCard } from "@/components/panorama-card";
+
+// Hardcoded properties with panorama
+const PANORAMA_PROPERTIES = {
+    1: {
+        id: 1,
+        property_name: "Modern Living Room with Panoramic View",
+        property_price: "5000000",
+        property_address: "123 Panorama Street, Manila",
+        property_bedroom: "3",
+        property_bathroom: "2",
+        property_floor: "150",
+        property_type: "Residential",
+        property_subtype: "Condominium",
+        property_featured_photo: "/images/panorama-living-room.jpg",
+        property_description: "Experience this stunning modern living room in 360° view. The space features contemporary design with ample natural light and premium finishes.",
+        category: {
+            property_category_name: "Luxury"
+        },
+        isPanorama: true
+    },
+    2: {
+        id: 2,
+        property_name: "Modern Empty Interior with Panoramic View",
+        property_price: "4500000",
+        property_address: "456 Modern Avenue, Makati",
+        property_bedroom: "2",
+        property_bathroom: "2",
+        property_floor: "120",
+        property_type: "Residential",
+        property_subtype: "Condominium",
+        property_featured_photo: "/images/empty-modern-room.jpg",
+        property_description: "A modern empty interior space perfect for customization. Features clean lines, abundant natural light, and a contemporary design aesthetic.",
+        category: {
+            property_category_name: "Modern"
+        },
+        isPanorama: true
+    }
+};
 
 // Type for property data
 interface Property {
@@ -249,6 +288,12 @@ function PropertiesContent() {
                 <>
                     {/* Property Grid */}
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                        {/* Panorama Properties - Only show when not searching */}
+                        {!urlSearchQuery && Object.values(PANORAMA_PROPERTIES).map((property) => (
+                            <PanoramaCard key={property.id} property={property} />
+                        ))}
+
+                        {/* Regular Properties */}
                         {properties.map((property) => (
                             <div
                                 key={property.id}
@@ -350,4 +395,4 @@ function PropertiesContent() {
             )}
         </div>
     );
-} 
+}
