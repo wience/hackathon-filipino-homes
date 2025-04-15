@@ -12,8 +12,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import MapboxMap from "@/components/MapboxMap";
 import * as THREE from "three";
-// @ts-ignore
-import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
+import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import { PanoramaCard } from "@/components/panorama-card";
 
 interface Property {
