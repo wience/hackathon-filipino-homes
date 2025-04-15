@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { Home, Search, User, Menu, Calendar, X } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { useState } from "react";
@@ -20,12 +21,18 @@ export function Header() {
             href="/"
             className="flex items-center space-x-3 text-xl font-bold text-gray-800 dark:text-white transition-colors hover:text-blue-600 dark:hover:text-blue-400"
           >
-            <div className="bg-gradient-to-br from-blue-500 to-blue-600 p-2.5 rounded-lg shadow-sm">
-              <Home className="h-5 w-5 text-white" />
+            <div className="relative w-10 h-10">
+              <Image
+                src="/images/filipinoworldlogo.png"
+                alt="Filipino World Logo"
+                fill
+                className="object-contain"
+              />
             </div>
             <span className="tracking-tight">
               {process.env.NEXT_PUBLIC_APP_NAME || "Filipino World"}
             </span>
+
           </Link>
 
           {/* Desktop Navigation */}
