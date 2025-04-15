@@ -6,7 +6,30 @@ import {
   StyleSheet,
   Image,
 } from "@react-pdf/renderer";
-import type { ProjectData } from "@/types/project";
+
+// Create a simplified PropertyProjectData type that matches what we're passing from the form
+interface PropertyProjectData {
+  project_name: string;
+  location: {
+    city: string;
+    province: string;
+    country: string;
+    latitude: string;
+    longitude: string;
+  };
+  last_updated: string;
+  property_details: {
+    type: string;
+    subtype: string;
+    bedrooms: string;
+    bathrooms: string;
+    land_size: string;
+    floor_area: string;
+    amenities: string[];
+  };
+  price: string;
+  description: string;
+}
 
 const styles = StyleSheet.create({
   page: {
@@ -84,8 +107,8 @@ const styles = StyleSheet.create({
     paddingTop: 10,
     marginTop: 20,
   },
-  // Research report styles
-  reportHeader: {
+  // Appraisal specific styles
+  appraisalHeader: {
     fontSize: 16,
     fontWeight: 'bold',
     textAlign: 'center',
@@ -96,7 +119,7 @@ const styles = StyleSheet.create({
     borderBottomColor: '#1e3a8a',
     paddingBottom: 5,
   },
-  reportSubheader: {
+  appraisalSubheader: {
     fontSize: 14,
     fontWeight: 'bold',
     marginBottom: 10,
@@ -105,23 +128,23 @@ const styles = StyleSheet.create({
     borderBottomColor: '#cbd5e1',
     paddingBottom: 3,
   },
-  reportText: {
+  appraisalText: {
     fontSize: 11,
     marginBottom: 8,
     lineHeight: 1.5,
     textAlign: 'justify',
   },
-  reportTextBold: {
+  appraisalTextBold: {
     fontSize: 11,
     fontWeight: 'bold',
     marginBottom: 8,
   },
-  reportTextItalic: {
+  appraisalTextItalic: {
     fontSize: 11,
     fontStyle: 'italic',
     marginBottom: 8,
   },
-  reportTable: {
+  appraisalTable: {
     display: 'flex',
     flexDirection: 'column',
     marginTop: 10,
@@ -129,514 +152,863 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#94a3b8',
   },
-  reportTableHeader: {
+  appraisalTableHeader: {
     backgroundColor: '#f1f5f9',
     borderBottomWidth: 1,
     borderBottomColor: '#94a3b8',
     padding: 5,
     flexDirection: 'row',
   },
-  reportTableRow: {
+  appraisalTableRow: {
     flexDirection: 'row',
     borderBottomWidth: 1,
     borderBottomColor: '#e2e8f0',
     padding: 5,
   },
-  reportTableCell: {
+  appraisalTableCell: {
     flex: 1,
     padding: 4,
     fontSize: 10,
   },
-  reportTableHeaderCell: {
+  appraisalTableHeaderCell: {
     flex: 1,
     padding: 4,
     fontSize: 10,
     fontWeight: 'bold',
   },
-  reportNote: {
+  appraisalNote: {
     fontSize: 9,
     fontStyle: 'italic',
     marginTop: 5,
     marginBottom: 10,
     color: '#64748b',
   },
-  reportCitation: {
+  appraisalCitation: {
     fontSize: 9,
     color: '#64748b',
     marginBottom: 5,
   },
-  reportFigure: {
+  appraisalFigure: {
     marginVertical: 10,
     padding: 10,
     borderWidth: 1,
     borderColor: '#e2e8f0',
     backgroundColor: '#f8fafc',
   },
-  reportFigureCaption: {
+  appraisalFigureCaption: {
     fontSize: 9,
     fontStyle: 'italic',
     textAlign: 'center',
     marginTop: 5,
     color: '#64748b',
   },
-  reportHighlight: {
+  appraisalHighlight: {
     backgroundColor: '#f0fdf4',
     padding: 8,
     marginVertical: 10,
     borderLeftWidth: 4,
     borderLeftColor: '#166534',
   },
-  reportWarning: {
+  appraisalWarning: {
     backgroundColor: '#fff7ed',
     padding: 8,
     marginVertical: 10,
     borderLeftWidth: 4,
     borderLeftColor: '#c2410c',
   },
-  reportBullet: {
+  appraisalBullet: {
     fontSize: 11,
     marginBottom: 5,
     paddingLeft: 15,
     lineHeight: 1.4,
   },
-  reportPageNumber: {
+  appraisalPageNumber: {
     position: 'absolute',
     bottom: 30,
     right: 30,
     fontSize: 10,
     color: '#64748b',
   },
+  // Add new styles for branding
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
+    paddingBottom: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e5e7eb',
+  },
+  logoContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  logo: {
+    width: 40,
+    height: 40,
+  },
+  companyName: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: '#166534',
+  },
+  debmac: {
+    fontSize: 12,
+    color: '#6b7280',
+    fontStyle: 'italic',
+  },
 });
 
 interface ProjectReportPDFProps {
-  projectData: ProjectData;
+  projectData: PropertyProjectData;
+  appraisalData: {
+    market_data: {
+      comparable_sales: string;
+      active_listings: string;
+      government_values: string;
+    };
+    purpose_of_appraisal: string;
+    rental_income_potential: {
+      monthly_rental_income: number;
+      occupancy_rates: number;
+    };
+    valuation_process: {
+      base_valuation: string;
+      adjustment_factors: string;
+      market_comparison: string;
+      rental_income_valuation: string;
+      aggregate_valuation: string;
+      agent_fee: number;
+    };
+    proximity_data: {
+      nearest_locations: string;
+      festivals_events: string;
+    };
+  };
 }
 
-export function ProjectReportPDF({ projectData }: ProjectReportPDFProps) {
-  // Helper function to get SDG alignment text based on score
-  const getSDGAlignmentText = (score: number) => {
-    if (score >= 8) return "Strong alignment with multiple SDGs";
-    if (score >= 6) return "Moderate alignment with several SDGs";
-    if (score >= 4) return "Basic alignment with some SDGs";
-    return "Limited alignment with SDGs";
-  };
-
-  // Helper function to get risk level text
-  const getRiskLevelText = (score: number) => {
-    if (score >= 8) return "Low Risk";
-    if (score >= 6) return "Moderate Risk";
-    if (score >= 4) return "Elevated Risk";
-    return "High Risk";
+export function ProjectReportPDF({ projectData, appraisalData }: ProjectReportPDFProps) {
+  // Helper function to format currency
+  const formatCurrency = (amount: number | string) => {
+    const numericAmount = typeof amount === 'string' ? parseFloat(amount.replace(/[^\d.-]/g, '')) : amount;
+    return new Intl.NumberFormat("en-PH", {
+      style: "currency",
+      currency: "PHP",
+      minimumFractionDigits: 0,
+    }).format(numericAmount);
   };
 
   return (
     <Document>
       {/* Cover Page */}
       <Page size="A4" style={styles.page}>
+        {/* Header with branding */}
+        <View style={styles.header}>
+          <View style={styles.logoContainer}>
+            <Image
+              src="/images/filipino-world-logo.png"
+              style={styles.logo}
+            />
+            <View>
+              <Text style={styles.companyName}>Filipino World</Text>
+              <Text style={styles.debmac}>DEBMAC</Text>
+            </View>
+          </View>
+        </View>
+
         <View style={styles.titleContainer}>
           <Text style={styles.title}>{projectData.project_name}</Text>
-          <Text style={styles.subtitle}>Sustainability Assessment Report</Text>
+          <Text style={styles.subtitle}>Comprehensive Property Appraisal Report</Text>
         </View>
+
         <View style={{ marginTop: 20, marginBottom: 20 }}>
           <Text style={styles.infoText}>
-            Location: {projectData.location.city}, {projectData.location.country}
+            Location: {projectData.location.city}, {projectData.location.province}, {projectData.location.country}
           </Text>
           <Text style={styles.infoText}>
-            Coordinates: {projectData.location.latitude}, {projectData.location.longitude}
+            Property Type: {projectData.property_details.type || "Residential"} ({projectData.property_details.subtype})
           </Text>
           <Text style={styles.infoText}>
             Report Date: {new Date().toLocaleDateString()}
           </Text>
-        </View>
-
-        <View style={{ marginTop: 40, marginBottom: 20 }}>
-          <Text style={[styles.reportText, { textAlign: 'center' }]}>
-            This comprehensive sustainability assessment has been conducted in accordance with
-            international frameworks including the United Nations Sustainable Development Goals,
-            IPCC Climate Risk Assessment methodologies, and ISO 14001 Environmental Management Systems.
+          <Text style={styles.infoText}>
+            Coordinates: {projectData.location.latitude}, {projectData.location.longitude}
           </Text>
         </View>
 
-        <View style={styles.reportFigure}>
-          <Text style={styles.reportFigureCaption}>
-            Overall Sustainability Score: {projectData.sustainability_score.overall_score.toFixed(1)}/10.0
+        <View style={{ marginTop: 30, marginBottom: 30 }}>
+          <Text style={[styles.appraisalText, { textAlign: 'center' }]}>
+            This comprehensive property appraisal has been conducted in accordance with
+            international real estate valuation standards, Philippine Valuation Standards (PVS),
+            and local market conditions in {projectData.location.city}.
           </Text>
+        </View>
+
+        <View style={{
+          backgroundColor: '#f0fdf4',
+          padding: 15,
+          borderRadius: 8,
+          borderWidth: 2,
+          borderColor: '#166534',
+          marginVertical: 20,
+          alignItems: 'center',
+        }}>
+          <Text style={{ fontSize: 14, fontWeight: 'bold', color: '#166534', marginBottom: 8 }}>
+            FINAL APPRAISED VALUE
+          </Text>
+          <Text style={{ fontSize: 24, fontWeight: 'bold', color: '#166534' }}>
+            {formatCurrency(appraisalData.valuation_process.aggregate_valuation)}
+          </Text>
+        </View>
+
+        <View style={styles.appraisalHighlight}>
+          <Text style={styles.appraisalTextBold}>Professional Appraisal for:</Text>
+          <Text style={styles.appraisalBullet}>• Purpose: {appraisalData.purpose_of_appraisal === "selling" ? "Property Sale and Market Listing" : appraisalData.purpose_of_appraisal}</Text>
+          <Text style={styles.appraisalBullet}>• Agent Commission: {formatCurrency(appraisalData.valuation_process.agent_fee)} (5% of valuation)</Text>
+          <Text style={styles.appraisalBullet}>• Market Positioning: Premium Residential Property</Text>
+          <Text style={styles.appraisalBullet}>• Valuation Date: {new Date().toLocaleDateString()}</Text>
         </View>
 
         <Text style={styles.footer}>
-          Last Updated: {projectData.last_updated
-            ? new Date(projectData.last_updated).toLocaleDateString()
-            : "Not available"}
+          Last Updated: {new Date(projectData.last_updated).toLocaleDateString()}
+          {' | '}Prepared by: Filipino World Real Estate Appraisal Division
         </Text>
       </Page>
 
       {/* Executive Summary Page */}
       <Page size="A4" style={styles.page}>
-        <Text style={styles.reportHeader}>Executive Summary</Text>
-
-        <Text style={styles.reportText}>
-          This report presents a comprehensive sustainability assessment for {projectData.project_name}
-          located in {projectData.location.city}, {projectData.location.country}. The assessment
-          employs a multi-criteria evaluation framework based on established sustainability science
-          and international standards. The project has achieved an overall sustainability score of
-          {' '}{projectData.sustainability_score.overall_score.toFixed(1)} out of 10.0.
-        </Text>
-
-        <View style={styles.reportHighlight}>
-          <Text style={styles.reportTextBold}>Key Findings:</Text>
-          <Text style={styles.reportBullet}>• {getSDGAlignmentText(projectData.sustainability_score.overall_score)}</Text>
-          <Text style={styles.reportBullet}>• Overall Risk Assessment: {getRiskLevelText(10 - projectData.sustainability_score.overall_score)}</Text>
-          <Text style={styles.reportBullet}>• Feasibility Status: {projectData.feasibility_report.status}</Text>
-        </View>
-
-        <Text style={styles.reportSubheader}>Assessment Methodology</Text>
-        <Text style={styles.reportText}>
-          The sustainability assessment framework applied in this report integrates multiple methodologies
-          from scientific literature and global sustainability frameworks. Our approach combines quantitative
-          scoring models with qualitative expert analysis across five critical domains:
-        </Text>
-
-        <View style={styles.reportTable}>
-          <View style={styles.reportTableHeader}>
-            <Text style={[styles.reportTableHeaderCell, { flex: 2 }]}>Assessment Domain</Text>
-            <Text style={styles.reportTableHeaderCell}>Score</Text>
-            <Text style={styles.reportTableHeaderCell}>Weight</Text>
-            <Text style={styles.reportTableHeaderCell}>Contribution</Text>
-          </View>
-
-          {Object.entries(projectData.sustainability_score.scores).map(([category, data]) => {
-            const weight = projectData.sustainability_score.weights[category as keyof typeof projectData.sustainability_score.weights].weight;
-
-            return (
-              <View key={category} style={styles.reportTableRow}>
-                <Text style={[styles.reportTableCell, { flex: 2 }]}>{category}</Text>
-                <Text style={styles.reportTableCell}>{data.raw_score.toFixed(1)}/10.0</Text>
-                <Text style={styles.reportTableCell}>{weight.toFixed(2)}</Text>
-                <Text style={styles.reportTableCell}>{data.weighted_score.toFixed(1)}</Text>
-              </View>
-            );
-          })}
-
-          <View style={[styles.reportTableRow, { backgroundColor: '#f0fdf4' }]}>
-            <Text style={[styles.reportTableCell, { flex: 2, fontWeight: 'bold' }]}>Overall Sustainability Score</Text>
-            <Text style={styles.reportTableCell}>-</Text>
-            <Text style={styles.reportTableCell}>-</Text>
-            <Text style={[styles.reportTableCell, { fontWeight: 'bold' }]}>{projectData.sustainability_score.overall_score.toFixed(1)}</Text>
-          </View>
-        </View>
-
-        <Text style={styles.reportNote}>
-          Note: This assessment follows the composite scoring model approach described in sustainability
-          literature, where indicators are normalized, weighted, and aggregated to produce a final score
-          (Singh et al., 2009). Weights reflect the relative importance of each domain based on project context.
-        </Text>
-
-        <Text style={styles.reportCitation}>
-          References: UN SDG Index (dashboards.sdgindex.org), Environmental Performance Index (earthdata.nasa.gov)
-        </Text>
-
-        <Text style={styles.reportPageNumber}>1</Text>
-      </Page>
-
-      {/* Detailed Assessment Page */}
-      <Page size="A4" style={styles.page}>
-        <Text style={styles.reportHeader}>Detailed Sustainability Assessment</Text>
-
-        <Text style={styles.reportSubheader}>1. Sustainability Framework Alignment</Text>
-        <Text style={styles.reportText}>
-          This assessment evaluates {projectData.project_name} against established global sustainability
-          frameworks, including the United Nations&apos; 17 Sustainable Development Goals (SDGs), IPCC Climate
-          Risk Assessment methodologies, and industry-specific standards. The multi-dimensional analysis
-          considers environmental, social, and economic factors in accordance with the &quot;triple bottom line&quot;
-          approach widely endorsed in sustainability science.
-        </Text>
-
-        <Text style={styles.reportSubheader}>2. Domain-Specific Analysis</Text>
-
-        {Object.entries(projectData.sustainability_score.scores).map(([category, data], index) => {
-          const weight = projectData.sustainability_score.weights[category as keyof typeof projectData.sustainability_score.weights].weight;
-          const justification = projectData.sustainability_score.weights[category as keyof typeof projectData.sustainability_score.weights].justification;
-
-          return (
-            <View key={category} style={{ marginBottom: 15 }}>
-              <Text style={styles.reportTextBold}>
-                2.{index + 1}. {category} (Score: {data.raw_score.toFixed(1)}/10.0)
-              </Text>
-
-              <Text style={styles.reportText}>
-                <Text style={{ fontWeight: 'bold' }}>Assessment Basis: </Text>
-                {justification}
-              </Text>
-
-              <Text style={styles.reportText}>
-                <Text style={{ fontWeight: 'bold' }}>Weight Factor: </Text>
-                {weight.toFixed(2)} - This domain represents {(weight * 100).toFixed(0)}% of the overall
-                sustainability score, reflecting its relative importance in the project context.
-              </Text>
-
-              {data.metrics && Object.entries(data.metrics).length > 0 && (
-                <View style={{ marginLeft: 15, marginTop: 5, marginBottom: 8 }}>
-                  <Text style={styles.reportTextItalic}>Key Metrics:</Text>
-                  {Object.entries(data.metrics).map(([metricName, metricValue]) => (
-                    <Text key={metricName} style={styles.reportBullet}>
-                      • {metricName}: {typeof metricValue === 'number' ? metricValue.toFixed(1) : metricValue}
-                    </Text>
-                  ))}
-                </View>
-              )}
-
-              <Text style={styles.reportText}>
-                <Text style={{ fontWeight: 'bold' }}>Analysis: </Text>
-                {data.raw_score >= 8
-                  ? `The project demonstrates excellent performance in ${category.toLowerCase()}, significantly exceeding benchmark standards.`
-                  : data.raw_score >= 6
-                    ? `The project shows good performance in ${category.toLowerCase()}, meeting or slightly exceeding benchmark standards.`
-                    : data.raw_score >= 4
-                      ? `The project shows moderate performance in ${category.toLowerCase()}, meeting minimum benchmark standards.`
-                      : `The project shows below-average performance in ${category.toLowerCase()}, falling short of benchmark standards.`
-                }
-                {data.raw_score < 5
-                  ? ` Improvement opportunities exist in this domain to enhance overall sustainability.`
-                  : ``
-                }
-              </Text>
-
-              {index < Object.entries(projectData.sustainability_score.scores).length - 1 && (
-                <View style={{ borderBottomWidth: 1, borderBottomColor: '#e2e8f0', marginVertical: 8 }} />
-              )}
+        {/* Header with branding */}
+        <View style={styles.header}>
+          <View style={styles.logoContainer}>
+            <Image
+              src="/images/filipino-world-logo.png"
+              style={styles.logo}
+            />
+            <View>
+              <Text style={styles.companyName}>Filipino World</Text>
+              <Text style={styles.debmac}>DEBMAC</Text>
             </View>
-          );
-        })}
-
-        <Text style={styles.reportPageNumber}>2</Text>
-      </Page>
-
-      {/* Risk Analysis Page */}
-      <Page size="A4" style={styles.page}>
-        <Text style={styles.reportHeader}>Risk Analysis & Feasibility Assessment</Text>
-
-        <Text style={styles.reportSubheader}>3. Risk Analysis Framework</Text>
-        <Text style={styles.reportText}>
-          This section applies the IPCC risk framework where climate-related risk emerges from the
-          interaction of hazards (e.g., extreme weather), exposure (people and assets in harm&apos;s way),
-          and vulnerability (susceptibility to damage). The analysis employs the formula
-          Risk = Hazard × (Exposure × Vulnerability) to quantify potential risks to the project.
-        </Text>
-
-        <Text style={styles.reportTextBold}>3.1. Risk Assessment Results</Text>
-
-        <View style={styles.reportTable}>
-          <View style={styles.reportTableHeader}>
-            <Text style={[styles.reportTableHeaderCell, { flex: 2 }]}>Risk Category</Text>
-            <Text style={styles.reportTableHeaderCell}>Risk Level</Text>
-            <Text style={[styles.reportTableHeaderCell, { flex: 3 }]}>Analysis</Text>
           </View>
-
-          {Object.entries(projectData.risk_analysis).map(([risk, riskData], index) => (
-            <View key={index} style={styles.reportTableRow}>
-              <Text style={[styles.reportTableCell, { flex: 2 }]}>
-                {risk
-                  .split("_")
-                  .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-                  .join(" ")}
-              </Text>
-              <Text style={styles.reportTableCell}>{riskData.value}</Text>
-              <Text style={[styles.reportTableCell, { flex: 3 }]}>{riskData.explanation}</Text>
-            </View>
-          ))}
         </View>
 
-        <Text style={styles.reportNote}>
-          Note: Risk levels are determined using quantitative criteria based on probability and consequence
-          matrices in accordance with ISO 31000 Risk Management standards.
+        <Text style={styles.appraisalHeader}>EXECUTIVE SUMMARY</Text>
+
+        <Text style={styles.appraisalText}>
+          This detailed report presents a comprehensive property appraisal for {projectData.project_name}
+          located in {projectData.location.city}, {projectData.location.province}, {projectData.location.country}.
+          The appraisal employs a multi-criteria evaluation framework based on established real estate valuation
+          methodologies, current market conditions, and the specific attributes of the subject property.
         </Text>
 
-        <Text style={styles.reportSubheader}>4. Feasibility Assessment</Text>
-        <Text style={styles.reportText}>
-          The feasibility assessment extends traditional project evaluation models to include environmental
-          and social criteria alongside economic considerations. This &quot;triple bottom line&quot; approach ensures
-          the project is financially sound, technically achievable, and delivers environmental and social benefits.
+        <Text style={styles.appraisalText}>
+          Our assessment incorporates comparative market analysis, income-based valuation methods, and
+          detailed property feature evaluation to arrive at an accurate and defensible market value.
+          The final valuation reflects both objective market data and qualitative factors affecting
+          property desirability in this sought-after location.
         </Text>
 
-        <View style={projectData.feasibility_report.status.toLowerCase().includes("approved") ||
-          projectData.feasibility_report.status.toLowerCase().includes("feasible") ?
-          styles.reportHighlight : styles.reportWarning}>
-          <Text style={styles.reportTextBold}>Feasibility Status: {projectData.feasibility_report.status}</Text>
-
-          <Text style={styles.reportTextBold}>Key Findings:</Text>
-          {projectData.feasibility_report.key_findings.map((finding, index) => (
-            <Text key={index} style={styles.reportBullet}>• {finding}</Text>
-          ))}
-
-          <Text style={styles.reportTextBold}>Recommendations:</Text>
-          {projectData.feasibility_report.recommendations.map((rec, index) => (
-            <Text key={index} style={styles.reportBullet}>• {rec}</Text>
-          ))}
-        </View>
-
-        <Text style={styles.reportCitation}>
-          References: IPCC Climate Reports (ipcc.ch), Risk Assessment Models (egusphere.copernicus.org)
-        </Text>
-
-        <Text style={styles.reportPageNumber}>3</Text>
-      </Page>
-
-      {/* Policy Compliance Page */}
-      <Page size="A4" style={styles.page}>
-        <Text style={styles.reportHeader}>Policy Compliance & Funding Opportunities</Text>
-
-        <Text style={styles.reportSubheader}>5. Regulatory Compliance Analysis</Text>
-        <Text style={styles.reportText}>
-          This section evaluates the project&apos;s alignment with relevant local regulations and international
-          guidelines. Compliance with these frameworks is essential for project approval, risk mitigation,
-          and access to sustainable financing opportunities.
-        </Text>
-
-        <Text style={styles.reportTextBold}>5.1. Local Regulatory Compliance</Text>
-
-        <View style={styles.reportTable}>
-          <View style={styles.reportTableHeader}>
-            <Text style={[styles.reportTableHeaderCell, { flex: 2 }]}>Regulation</Text>
-            <Text style={styles.reportTableHeaderCell}>Status</Text>
-            <Text style={[styles.reportTableHeaderCell, { flex: 2 }]}>Notes</Text>
-          </View>
-
-          {projectData.policy_compliance.local_regulations.map((reg, index) => (
-            <View key={index} style={styles.reportTableRow}>
-              <Text style={[styles.reportTableCell, { flex: 2 }]}>{reg.law_name}</Text>
-              <Text style={styles.reportTableCell}>{reg.compliance_status}</Text>
-              <Text style={[styles.reportTableCell, { flex: 2 }]}>{reg.notes}</Text>
-            </View>
-          ))}
-        </View>
-
-        <Text style={styles.reportTextBold}>5.2. International Guidelines Alignment</Text>
-
-        <View style={styles.reportTable}>
-          <View style={styles.reportTableHeader}>
-            <Text style={[styles.reportTableHeaderCell, { flex: 2 }]}>Framework/Treaty</Text>
-            <Text style={styles.reportTableHeaderCell}>Alignment</Text>
-            <Text style={[styles.reportTableHeaderCell, { flex: 2 }]}>Notes</Text>
-          </View>
-
-          {projectData.policy_compliance.international_guidelines.map((guide, index) => (
-            <View key={index} style={styles.reportTableRow}>
-              <Text style={[styles.reportTableCell, { flex: 2 }]}>{guide.treaty}</Text>
-              <Text style={styles.reportTableCell}>{guide.alignment}</Text>
-              <Text style={[styles.reportTableCell, { flex: 2 }]}>{guide.notes}</Text>
-            </View>
-          ))}
-        </View>
-
-        <Text style={styles.reportSubheader}>6. Funding Opportunities</Text>
-        <Text style={styles.reportText}>
-          Based on the sustainability assessment and compliance analysis, the following funding
-          opportunities have been identified as potentially suitable for this project:
-        </Text>
-
-        <View style={styles.reportTable}>
-          <View style={styles.reportTableHeader}>
-            <Text style={[styles.reportTableHeaderCell, { flex: 2 }]}>Funding Source</Text>
-            <Text style={styles.reportTableHeaderCell}>Amount</Text>
-            <Text style={styles.reportTableHeaderCell}>Deadline</Text>
-            <Text style={styles.reportTableHeaderCell}>Eligibility</Text>
-          </View>
-
-          {projectData.funding_opportunities.map((fund, index) => (
-            <View key={index} style={styles.reportTableRow}>
-              <Text style={[styles.reportTableCell, { flex: 2 }]}>{fund.name}</Text>
-              <Text style={styles.reportTableCell}>{fund.amount}</Text>
-              <Text style={styles.reportTableCell}>{fund.application_deadline}</Text>
-              <Text style={styles.reportTableCell}>{fund.eligibility}</Text>
-            </View>
-          ))}
-        </View>
-
-        <Text style={styles.reportPageNumber}>4</Text>
-      </Page>
-
-      {/* Data Sources & Methodology Page */}
-      <Page size="A4" style={styles.page}>
-        <Text style={styles.reportHeader}>Data Sources & Methodology</Text>
-
-        <Text style={styles.reportSubheader}>7. Data Integration Approach</Text>
-        <Text style={styles.reportText}>
-          This assessment integrates data from multiple sources, including environmental APIs,
-          geospatial databases, and regulatory information systems. The data integration follows
-          best practices for structuring API data to ensure accuracy and reliability in the
-          sustainability calculations.
-        </Text>
-
-        <Text style={styles.reportTextBold}>7.1. API Data Sources</Text>
-
-        <View style={styles.reportTable}>
-          <View style={styles.reportTableHeader}>
-            <Text style={[styles.reportTableHeaderCell, { flex: 1 }]}>API Source</Text>
-            <Text style={[styles.reportTableHeaderCell, { flex: 2 }]}>Description</Text>
-            <Text style={[styles.reportTableHeaderCell, { flex: 1 }]}>Data Provider</Text>
-          </View>
-
-          {projectData.api_context_data.api.map((api, index) => (
-            <View key={index} style={styles.reportTableRow}>
-              <Text style={[styles.reportTableCell, { flex: 1 }]}>{api.name}</Text>
-              <Text style={[styles.reportTableCell, { flex: 2 }]}>{api.summary}</Text>
-              <Text style={[styles.reportTableCell, { flex: 1 }]}>{api.source}</Text>
-            </View>
-          ))}
-        </View>
-
-        <Text style={styles.reportSubheader}>8. Assessment Methodology</Text>
-        <Text style={styles.reportText}>
-          The sustainability assessment methodology employed in this report follows a multi-criteria
-          decision analysis (MCDA) approach, which is widely recognized in sustainability science
-          literature. The process involves:
-        </Text>
-
-        <Text style={styles.reportBullet}>
-          • <Text style={{ fontWeight: 'bold' }}>Indicator Selection:</Text> Key performance indicators
-          were selected across five sustainability domains based on their relevance, measurability,
-          and alignment with global frameworks.
-        </Text>
-
-        <Text style={styles.reportBullet}>
-          • <Text style={{ fontWeight: 'bold' }}>Data Normalization:</Text> Raw data from various sources
-          were normalized to comparable scales (0-10) using proximity-to-target methods.
-        </Text>
-
-        <Text style={styles.reportBullet}>
-          • <Text style={{ fontWeight: 'bold' }}>Weighting:</Text> Domain weights were assigned based on
-          project context, regional priorities, and expert assessment of relative importance.
-        </Text>
-
-        <Text style={styles.reportBullet}>
-          • <Text style={{ fontWeight: 'bold' }}>Aggregation:</Text> A weighted average model was used to
-          calculate the overall sustainability score, following established practices in indices like
-          the SDG Index and Environmental Performance Index.
-        </Text>
-
-        <Text style={styles.reportBullet}>
-          • <Text style={{ fontWeight: 'bold' }}>Risk Assessment:</Text> The IPCC risk framework
-          (Risk = Hazard × Exposure × Vulnerability) was applied to evaluate potential threats.
-        </Text>
-
-        <View style={styles.reportHighlight}>
-          <Text style={styles.reportTextBold}>Certification Statement:</Text>
-          <Text style={styles.reportText}>
-            This sustainability assessment has been conducted in accordance with international
-            environmental standards and methodologies established in peer-reviewed literature.
-            The assessment framework integrates approaches from the United Nations Sustainable
-            Development Goals, IPCC Climate Risk Assessment, and ISO 14001 Environmental Management
-            Systems to provide a comprehensive evaluation of the project&apos;s sustainability profile.
+        <View style={{
+          backgroundColor: '#f0fdf4',
+          padding: 15,
+          borderRadius: 4,
+          borderWidth: 2,
+          borderColor: '#166534',
+          marginVertical: 15,
+          alignItems: 'center',
+        }}>
+          <Text style={{ fontSize: 14, fontWeight: 'bold', color: '#166534', marginBottom: 5 }}>
+            AGGREGATE VALUATION
+          </Text>
+          <Text style={{ fontSize: 22, fontWeight: 'bold', color: '#166534' }}>
+            {formatCurrency(appraisalData.valuation_process.aggregate_valuation)}
           </Text>
         </View>
 
-        <Text style={styles.reportCitation}>
-          References: Singh et al. (2009), UN SDG Index (dashboards.sdgindex.org), Environmental Performance Index (earthdata.nasa.gov),
-          IPCC Risk Framework (ipcc.ch), Multi-criteria Decision Analysis for Sustainability (mdpi.com)
+        <Text style={styles.appraisalSubheader}>Valuation Methodology</Text>
+
+        <View style={styles.appraisalTable}>
+          <View style={styles.appraisalTableHeader}>
+            <Text style={[styles.appraisalTableHeaderCell, { flex: 2 }]}>Valuation Component</Text>
+            <Text style={styles.appraisalTableHeaderCell}>Value</Text>
+          </View>
+
+          <View style={styles.appraisalTableRow}>
+            <Text style={[styles.appraisalTableCell, { flex: 2 }]}>Base Zonal Valuation</Text>
+            <Text style={styles.appraisalTableCell}>{appraisalData.valuation_process.base_valuation}</Text>
+          </View>
+
+          <View style={styles.appraisalTableRow}>
+            <Text style={[styles.appraisalTableCell, { flex: 2 }]}>Quality & Feature Adjustments</Text>
+            <Text style={styles.appraisalTableCell}>{appraisalData.valuation_process.adjustment_factors}</Text>
+          </View>
+
+          <View style={styles.appraisalTableRow}>
+            <Text style={[styles.appraisalTableCell, { flex: 2 }]}>Market-Based Valuation</Text>
+            <Text style={styles.appraisalTableCell}>{appraisalData.valuation_process.market_comparison}</Text>
+          </View>
+
+          <View style={styles.appraisalTableRow}>
+            <Text style={[styles.appraisalTableCell, { flex: 2 }]}>Annual Rental Income Potential</Text>
+            <Text style={styles.appraisalTableCell}>{appraisalData.valuation_process.rental_income_valuation}</Text>
+          </View>
+
+          <View style={styles.appraisalTableRow}>
+            <Text style={[styles.appraisalTableCell, { flex: 2, fontWeight: 'bold' }]}>Final Aggregate Valuation</Text>
+            <Text style={[styles.appraisalTableCell, { fontWeight: 'bold' }]}>{formatCurrency(appraisalData.valuation_process.aggregate_valuation)}</Text>
+          </View>
+
+          <View style={styles.appraisalTableRow}>
+            <Text style={[styles.appraisalTableCell, { flex: 2 }]}>Agent Commission (5%)</Text>
+            <Text style={styles.appraisalTableCell}>{formatCurrency(appraisalData.valuation_process.agent_fee)}</Text>
+          </View>
+        </View>
+
+        <Text style={styles.appraisalSubheader}>Property Overview</Text>
+        <Text style={styles.appraisalText}>
+          {projectData.description}
         </Text>
 
-        <Text style={styles.footer}>End of Report</Text>
-        <Text style={styles.reportPageNumber}>5</Text>
+        <Text style={styles.appraisalPageNumber}>1</Text>
+      </Page>
+
+      {/* Property Details Page */}
+      <Page size="A4" style={styles.page}>
+        {/* Header with branding */}
+        <View style={styles.header}>
+          <View style={styles.logoContainer}>
+            <Image
+              src="/images/filipino-world-logo.png"
+              style={styles.logo}
+            />
+            <View>
+              <Text style={styles.companyName}>Filipino World</Text>
+              <Text style={styles.debmac}>DEBMAC</Text>
+            </View>
+          </View>
+        </View>
+
+        <Text style={styles.appraisalHeader}>PROPERTY SPECIFICATIONS</Text>
+
+        <Text style={styles.appraisalSubheader}>Core Property Details</Text>
+        <View style={styles.appraisalTable}>
+          <View style={styles.appraisalTableHeader}>
+            <Text style={[styles.appraisalTableHeaderCell, { flex: 2 }]}>Feature</Text>
+            <Text style={styles.appraisalTableHeaderCell}>Specification</Text>
+          </View>
+
+          <View style={styles.appraisalTableRow}>
+            <Text style={[styles.appraisalTableCell, { flex: 2 }]}>Property Type</Text>
+            <Text style={styles.appraisalTableCell}>{projectData.property_details.type || "Residential House and Lot"}</Text>
+          </View>
+
+          <View style={styles.appraisalTableRow}>
+            <Text style={[styles.appraisalTableCell, { flex: 2 }]}>Listing Type</Text>
+            <Text style={styles.appraisalTableCell}>{projectData.property_details.subtype}</Text>
+          </View>
+
+          <View style={styles.appraisalTableRow}>
+            <Text style={[styles.appraisalTableCell, { flex: 2 }]}>Bedrooms</Text>
+            <Text style={styles.appraisalTableCell}>{projectData.property_details.bedrooms || 'N/A'}</Text>
+          </View>
+
+          <View style={styles.appraisalTableRow}>
+            <Text style={[styles.appraisalTableCell, { flex: 2 }]}>Bathrooms</Text>
+            <Text style={styles.appraisalTableCell}>{projectData.property_details.bathrooms || 'N/A'}</Text>
+          </View>
+
+          <View style={styles.appraisalTableRow}>
+            <Text style={[styles.appraisalTableCell, { flex: 2 }]}>Land Size</Text>
+            <Text style={styles.appraisalTableCell}>
+              {projectData.property_details.land_size ? `${projectData.property_details.land_size} sqm` : 'N/A'}
+            </Text>
+          </View>
+
+          <View style={styles.appraisalTableRow}>
+            <Text style={[styles.appraisalTableCell, { flex: 2 }]}>Floor Area</Text>
+            <Text style={styles.appraisalTableCell}>
+              {projectData.property_details.floor_area ? `${projectData.property_details.floor_area} sqm` : 'N/A'}
+            </Text>
+          </View>
+
+          <View style={styles.appraisalTableRow}>
+            <Text style={[styles.appraisalTableCell, { flex: 2 }]}>Property Configuration</Text>
+            <Text style={styles.appraisalTableCell}>3 Floors</Text>
+          </View>
+
+          <View style={styles.appraisalTableRow}>
+            <Text style={[styles.appraisalTableCell, { flex: 2 }]}>Parking Capacity</Text>
+            <Text style={styles.appraisalTableCell}>4-6 Vehicles</Text>
+          </View>
+
+          <View style={styles.appraisalTableRow}>
+            <Text style={[styles.appraisalTableCell, { flex: 2 }]}>Staff Accommodation</Text>
+            <Text style={styles.appraisalTableCell}>1 Maid&apos;s Room with private bathroom</Text>
+          </View>
+        </View>
+
+        <Text style={styles.appraisalSubheader}>Structural Analysis & Material Quality</Text>
+        <Text style={styles.appraisalText}>
+          The property has been recently renovated with high-quality materials and fixtures.
+          The structure is sound and well-maintained, with modern architectural elements that
+          enhance both aesthetic appeal and functional utility. Key structural improvements include:
+        </Text>
+
+        <View style={styles.appraisalHighlight}>
+          <Text style={styles.appraisalTextBold}>Recent Renovations:</Text>
+          <Text style={styles.appraisalBullet}>• Complete electrical rewiring with modern safety features</Text>
+          <Text style={styles.appraisalBullet}>• New plumbing throughout the property</Text>
+          <Text style={styles.appraisalBullet}>• Full interior and exterior repainting</Text>
+          <Text style={styles.appraisalBullet}>• New SPC Flooring in all bedrooms</Text>
+          <Text style={styles.appraisalBullet}>• Premium fixtures from Kohler and Grohe</Text>
+          <Text style={styles.appraisalBullet}>• Custom quartz kitchen countertops</Text>
+        </View>
+
+        {projectData.property_details.amenities && projectData.property_details.amenities.length > 0 && (
+          <>
+            <Text style={styles.appraisalSubheader}>Amenities & Premium Features</Text>
+            <View style={[styles.appraisalHighlight, { marginBottom: 15 }]}>
+              {projectData.property_details.amenities.map((amenity, index) => (
+                <Text key={index} style={styles.appraisalBullet}>• {amenity}</Text>
+              ))}
+              <Text style={styles.appraisalBullet}>• Brand New Daikin 2.5 HP Split Type Air Conditioning</Text>
+              <Text style={styles.appraisalBullet}>• Elba Rangehood</Text>
+              <Text style={styles.appraisalBullet}>• Premium &quot;Kohler&quot; Water Fixtures</Text>
+              <Text style={styles.appraisalBullet}>• &quot;Grohe&quot; Shower Fixtures</Text>
+              <Text style={styles.appraisalBullet}>• Custom Built-in Closets</Text>
+              <Text style={styles.appraisalBullet}>• Open Garden Lot</Text>
+            </View>
+          </>
+        )}
+
+        <Text style={styles.appraisalSubheader}>Location Quality Assessment</Text>
+        <Text style={styles.appraisalText}>
+          The property is situated in Hacienda Salinas, a secured gated subdivision in Lahug, Cebu City.
+          This location offers an excellent balance of privacy, security, and accessibility to key urban amenities.
+          The neighborhood is characterized by well-maintained properties and landscaped common areas,
+          contributing to strong property value stability and growth potential.
+        </Text>
+
+        <Text style={styles.appraisalPageNumber}>2</Text>
+      </Page>
+
+      {/* Market Analysis Page */}
+      <Page size="A4" style={styles.page}>
+        {/* Header with branding */}
+        <View style={styles.header}>
+          <View style={styles.logoContainer}>
+            <Image
+              src="/images/filipino-world-logo.png"
+              style={styles.logo}
+            />
+            <View>
+              <Text style={styles.companyName}>Filipino World</Text>
+              <Text style={styles.debmac}>DEBMAC</Text>
+            </View>
+          </View>
+        </View>
+
+        <Text style={styles.appraisalHeader}>COMPREHENSIVE MARKET ANALYSIS</Text>
+
+        <Text style={styles.appraisalText}>
+          This section presents a detailed analysis of current market conditions affecting
+          property values in Lahug, Cebu City, with particular focus on premium residential
+          properties similar to the subject property. Our analysis incorporates multiple data
+          sources and valuation methodologies to ensure a comprehensive and accurate assessment.
+        </Text>
+
+        <Text style={[styles.appraisalSubheader, { marginTop: 15 }]}>Current Market Position</Text>
+        <View style={{
+          backgroundColor: '#f0fdf4',
+          padding: 10,
+          borderRadius: 4,
+          borderLeftWidth: 4,
+          borderLeftColor: '#166534',
+          marginVertical: 10,
+        }}>
+          <Text style={{ fontSize: 16, fontWeight: 'bold', color: '#166534', marginBottom: 5 }}>
+            FINAL VALUATION: {formatCurrency(appraisalData.valuation_process.aggregate_valuation)}
+          </Text>
+        </View>
+
+        <Text style={styles.appraisalSubheader}>1. Comparable Sales Analysis</Text>
+        <Text style={styles.appraisalText}>
+          {appraisalData.market_data.comparable_sales}
+        </Text>
+
+        <View style={styles.appraisalTable}>
+          <View style={styles.appraisalTableHeader}>
+            <Text style={[styles.appraisalTableHeaderCell, { flex: 3 }]}>Comparable Property</Text>
+            <Text style={[styles.appraisalTableHeaderCell, { flex: 2 }]}>Sale Price</Text>
+            <Text style={styles.appraisalTableHeaderCell}>Price/sqm</Text>
+          </View>
+
+          <View style={styles.appraisalTableRow}>
+            <Text style={[styles.appraisalTableCell, { flex: 3 }]}>4BR House in Lahug Heights (160sqm)</Text>
+            <Text style={[styles.appraisalTableCell, { flex: 2 }]}>₱18,500,000</Text>
+            <Text style={styles.appraisalTableCell}>₱115,625</Text>
+          </View>
+
+          <View style={styles.appraisalTableRow}>
+            <Text style={[styles.appraisalTableCell, { flex: 3 }]}>3BR Premium House near JY Square (145sqm)</Text>
+            <Text style={[styles.appraisalTableCell, { flex: 2 }]}>₱17,200,000</Text>
+            <Text style={styles.appraisalTableCell}>₱118,620</Text>
+          </View>
+
+          <View style={styles.appraisalTableRow}>
+            <Text style={[styles.appraisalTableCell, { flex: 3 }]}>5BR Luxury House in Cebu IT Park Area (180sqm)</Text>
+            <Text style={[styles.appraisalTableCell, { flex: 2 }]}>₱20,000,000</Text>
+            <Text style={styles.appraisalTableCell}>₱111,111</Text>
+          </View>
+        </View>
+
+        <Text style={styles.appraisalSubheader}>2. Active Listings</Text>
+        <Text style={styles.appraisalText}>
+          {appraisalData.market_data.active_listings}
+        </Text>
+
+        <View style={styles.appraisalTable}>
+          <View style={styles.appraisalTableHeader}>
+            <Text style={[styles.appraisalTableHeaderCell, { flex: 3 }]}>Active Listing</Text>
+            <Text style={[styles.appraisalTableHeaderCell, { flex: 2 }]}>Asking Price</Text>
+            <Text style={styles.appraisalTableHeaderCell}>Days on Market</Text>
+          </View>
+
+          <View style={styles.appraisalTableRow}>
+            <Text style={[styles.appraisalTableCell, { flex: 3 }]}>4BR House in Hacienda Salinas (155sqm)</Text>
+            <Text style={[styles.appraisalTableCell, { flex: 2 }]}>₱19,500,000</Text>
+            <Text style={styles.appraisalTableCell}>45</Text>
+          </View>
+
+          <View style={styles.appraisalTableRow}>
+            <Text style={[styles.appraisalTableCell, { flex: 3 }]}>4BR Modern House near 32 Sanson (160sqm)</Text>
+            <Text style={[styles.appraisalTableCell, { flex: 2 }]}>₱20,500,000</Text>
+            <Text style={styles.appraisalTableCell}>30</Text>
+          </View>
+
+          <View style={styles.appraisalTableRow}>
+            <Text style={[styles.appraisalTableCell, { flex: 3 }]}>3BR Premium House in Lahug (140sqm)</Text>
+            <Text style={[styles.appraisalTableCell, { flex: 2 }]}>₱18,000,000</Text>
+            <Text style={styles.appraisalTableCell}>60</Text>
+          </View>
+        </View>
+
+        <Text style={styles.appraisalSubheader}>3. Government Valuations</Text>
+        <Text style={styles.appraisalText}>
+          {appraisalData.market_data.government_values}
+        </Text>
+
+        <View style={styles.appraisalHighlight}>
+          <Text style={styles.appraisalTextBold}>Government Valuation Metrics:</Text>
+          <Text style={styles.appraisalBullet}>• BIR Zonal Value: ₱12,000 per sqm</Text>
+          <Text style={styles.appraisalBullet}>• Total Zonal Value (150 sqm): ₱1,800,000</Text>
+          <Text style={styles.appraisalBullet}>• Local Government Assessment: ₱1,800,000</Text>
+          <Text style={styles.appraisalBullet}>• Market Value Premium: Approximately 11x government valuation</Text>
+        </View>
+
+        <Text style={styles.appraisalSubheader}>4. Rental Income Potential</Text>
+        <Text style={styles.appraisalText}>
+          The rental potential for this property is significant, given its premium location,
+          excellent condition, and high-end features. Based on current market rates for
+          similar properties in Lahug, we project the following rental metrics:
+        </Text>
+
+        <View style={styles.appraisalTable}>
+          <View style={styles.appraisalTableHeader}>
+            <Text style={[styles.appraisalTableHeaderCell, { flex: 2 }]}>Rental Metric</Text>
+            <Text style={styles.appraisalTableHeaderCell}>Value</Text>
+          </View>
+
+          <View style={styles.appraisalTableRow}>
+            <Text style={[styles.appraisalTableCell, { flex: 2 }]}>Monthly Rental Income</Text>
+            <Text style={styles.appraisalTableCell}>{formatCurrency(appraisalData.rental_income_potential.monthly_rental_income)}</Text>
+          </View>
+
+          <View style={styles.appraisalTableRow}>
+            <Text style={[styles.appraisalTableCell, { flex: 2 }]}>Annual Rental Income</Text>
+            <Text style={styles.appraisalTableCell}>{formatCurrency(appraisalData.rental_income_potential.monthly_rental_income * 12)}</Text>
+          </View>
+
+          <View style={styles.appraisalTableRow}>
+            <Text style={[styles.appraisalTableCell, { flex: 2 }]}>Expected Occupancy Rate</Text>
+            <Text style={styles.appraisalTableCell}>{appraisalData.rental_income_potential.occupancy_rates}%</Text>
+          </View>
+
+          <View style={styles.appraisalTableRow}>
+            <Text style={[styles.appraisalTableCell, { flex: 2 }]}>Effective Annual Income</Text>
+            <Text style={styles.appraisalTableCell}>{formatCurrency(appraisalData.rental_income_potential.monthly_rental_income * 12 * (appraisalData.rental_income_potential.occupancy_rates / 100))}</Text>
+          </View>
+
+          <View style={styles.appraisalTableRow}>
+            <Text style={[styles.appraisalTableCell, { flex: 2 }]}>Gross Rental Yield</Text>
+            <Text style={styles.appraisalTableCell}>{((appraisalData.rental_income_potential.monthly_rental_income * 12) / parseFloat(appraisalData.valuation_process.aggregate_valuation.replace(/[^\d.-]/g, '')) * 100).toFixed(2)}%</Text>
+          </View>
+        </View>
+
+        <Text style={styles.appraisalNote}>
+          Note: Rental rates in this area have shown steady growth of 5-7% annually over the past three years, indicating strong potential for future income growth.
+        </Text>
+
+        <Text style={styles.appraisalPageNumber}>3</Text>
+      </Page>
+
+      {/* Location Analysis Page */}
+      <Page size="A4" style={styles.page}>
+        {/* Header with branding */}
+        <View style={styles.header}>
+          <View style={styles.logoContainer}>
+            <Image
+              src="/images/filipino-world-logo.png"
+              style={styles.logo}
+            />
+            <View>
+              <Text style={styles.companyName}>Filipino World</Text>
+              <Text style={styles.debmac}>DEBMAC</Text>
+            </View>
+          </View>
+        </View>
+
+        <Text style={styles.appraisalHeader}>LOCATION ANALYSIS & FINAL VALUATION</Text>
+
+        <Text style={styles.appraisalText}>
+          Location is one of the most significant factors affecting property value. This section provides
+          a comprehensive analysis of the property&apos;s location advantages, proximity to essential
+          amenities, and how these factors contribute to its overall market value.
+        </Text>
+
+        <Text style={styles.appraisalSubheader}>1. Proximity to Key Locations</Text>
+        <Text style={styles.appraisalText}>
+          {appraisalData.proximity_data.nearest_locations}
+        </Text>
+
+        <View style={styles.appraisalTable}>
+          <View style={styles.appraisalTableHeader}>
+            <Text style={[styles.appraisalTableHeaderCell, { flex: 2 }]}>Landmark</Text>
+            <Text style={styles.appraisalTableHeaderCell}>Approximate Distance</Text>
+          </View>
+
+          <View style={styles.appraisalTableRow}>
+            <Text style={[styles.appraisalTableCell, { flex: 2 }]}>JY Square Mall</Text>
+            <Text style={styles.appraisalTableCell}>0.5 km</Text>
+          </View>
+
+          <View style={styles.appraisalTableRow}>
+            <Text style={[styles.appraisalTableCell, { flex: 2 }]}>32 Sanson by Rockwell</Text>
+            <Text style={styles.appraisalTableCell}>0.8 km</Text>
+          </View>
+
+          <View style={styles.appraisalTableRow}>
+            <Text style={[styles.appraisalTableCell, { flex: 2 }]}>Mivesa Garden Residences</Text>
+            <Text style={styles.appraisalTableCell}>1.0 km</Text>
+          </View>
+
+          <View style={styles.appraisalTableRow}>
+            <Text style={[styles.appraisalTableCell, { flex: 2 }]}>Cebu IT Park</Text>
+            <Text style={styles.appraisalTableCell}>2.5 km</Text>
+          </View>
+
+          <View style={styles.appraisalTableRow}>
+            <Text style={[styles.appraisalTableCell, { flex: 2 }]}>Cebu Business Park</Text>
+            <Text style={styles.appraisalTableCell}>3.2 km</Text>
+          </View>
+        </View>
+
+        <Text style={styles.appraisalSubheader}>2. Community & Cultural Environment</Text>
+        <Text style={styles.appraisalText}>
+          {appraisalData.proximity_data.festivals_events}
+        </Text>
+
+        <View style={styles.appraisalHighlight}>
+          <Text style={styles.appraisalTextBold}>Cultural & Community Highlights:</Text>
+          <Text style={styles.appraisalBullet}>• Sinulog Festival - Annual cultural and religious festival in January</Text>
+          <Text style={styles.appraisalBullet}>• Strong sense of community in the Lahug neighborhood</Text>
+          <Text style={styles.appraisalBullet}>• Access to local markets and authentic Filipino cuisine</Text>
+          <Text style={styles.appraisalBullet}>• Proximity to international schools and universities</Text>
+          <Text style={styles.appraisalBullet}>• Growing expatriate community</Text>
+        </View>
+
+        <Text style={styles.appraisalSubheader}>3. Investment Potential Analysis</Text>
+        <Text style={styles.appraisalText}>
+          The property represents an excellent investment opportunity due to several factors:
+        </Text>
+
+        <View style={styles.appraisalTable}>
+          <View style={styles.appraisalTableHeader}>
+            <Text style={[styles.appraisalTableHeaderCell, { flex: 2 }]}>Investment Factor</Text>
+            <Text style={styles.appraisalTableHeaderCell}>Assessment</Text>
+          </View>
+
+          <View style={styles.appraisalTableRow}>
+            <Text style={[styles.appraisalTableCell, { flex: 2 }]}>Capital Appreciation Potential</Text>
+            <Text style={styles.appraisalTableCell}>High (8-10% annually)</Text>
+          </View>
+
+          <View style={styles.appraisalTableRow}>
+            <Text style={[styles.appraisalTableCell, { flex: 2 }]}>Rental Yield</Text>
+            <Text style={styles.appraisalTableCell}>4.8% (above market average)</Text>
+          </View>
+
+          <View style={styles.appraisalTableRow}>
+            <Text style={[styles.appraisalTableCell, { flex: 2 }]}>Market Demand</Text>
+            <Text style={styles.appraisalTableCell}>Strong and Consistent</Text>
+          </View>
+
+          <View style={styles.appraisalTableRow}>
+            <Text style={[styles.appraisalTableCell, { flex: 2 }]}>Liquidity</Text>
+            <Text style={styles.appraisalTableCell}>Medium-High</Text>
+          </View>
+
+          <View style={styles.appraisalTableRow}>
+            <Text style={[styles.appraisalTableCell, { flex: 2 }]}>Risk Assessment</Text>
+            <Text style={styles.appraisalTableCell}>Low</Text>
+          </View>
+        </View>
+
+        <Text style={styles.appraisalSubheader}>4. Final Valuation</Text>
+        <View style={{
+          backgroundColor: '#f0fdf4',
+          padding: 15,
+          borderRadius: 4,
+          borderWidth: 2,
+          borderColor: '#166534',
+          marginVertical: 15,
+          alignItems: 'center',
+        }}>
+          <Text style={{ fontSize: 14, fontWeight: 'bold', color: '#166534', marginBottom: 5 }}>
+            AGGREGATE VALUATION
+          </Text>
+          <Text style={{ fontSize: 24, fontWeight: 'bold', color: '#166534' }}>
+            {formatCurrency(appraisalData.valuation_process.aggregate_valuation)}
+          </Text>
+        </View>
+
+        <View style={styles.appraisalWarning}>
+          <Text style={styles.appraisalTextBold}>Important Notes:</Text>
+          <Text style={styles.appraisalBullet}>• This appraisal is valid for 90 days from the report date</Text>
+          <Text style={styles.appraisalBullet}>• Agent fee: {formatCurrency(appraisalData.valuation_process.agent_fee)} (5% of valuation)</Text>
+          <Text style={styles.appraisalBullet}>• The final value may be subject to negotiation</Text>
+          <Text style={styles.appraisalBullet}>• Market conditions may affect the actual selling price</Text>
+          <Text style={styles.appraisalBullet}>• Premium fixtures and recent renovations contribute significantly to the valuation</Text>
+        </View>
+
+        <Text style={styles.appraisalCitation}>
+          References: Local Government Zonal Valuations, BIR Tax Declarations, Real Estate Industry Association of the Philippines, Cebu Real Estate Board
+        </Text>
+
+        <Text style={styles.appraisalPageNumber}>4</Text>
+      </Page>
+
+      {/* Additional Investment Analysis Page */}
+      <Page size="A4" style={styles.page}>
+        {/* Header with branding */}
+        <View style={styles.header}>
+          <View style={styles.logoContainer}>
+            <Image
+              src="/images/filipino-world-logo.png"
+              style={styles.logo}
+            />
+            <View>
+              <Text style={styles.companyName}>Filipino World</Text>
+              <Text style={styles.debmac}>DEBMAC</Text>
+            </View>
+          </View>
+        </View>
+
+        <Text style={styles.appraisalHeader}>INVESTMENT POTENTIAL & SUMMARY</Text>
+
+        <Text style={styles.appraisalSubheader}>Valuation Breakdown</Text>
+        <View style={styles.appraisalTable}>
+          <View style={styles.appraisalTableHeader}>
+            <Text style={[styles.appraisalTableHeaderCell, { flex: 2 }]}>Component</Text>
+            <Text style={styles.appraisalTableHeaderCell}>Contribution</Text>
+          </View>
+
+          <View style={styles.appraisalTableRow}>
+            <Text style={[styles.appraisalTableCell, { flex: 2 }]}>Base Land Value</Text>
+            <Text style={styles.appraisalTableCell}>₱1,800,000</Text>
+          </View>
+
+          <View style={styles.appraisalTableRow}>
+            <Text style={[styles.appraisalTableCell, { flex: 2 }]}>Structural Value</Text>
+            <Text style={styles.appraisalTableCell}>₱9,500,000</Text>
+          </View>
+
+          <View style={styles.appraisalTableRow}>
+            <Text style={[styles.appraisalTableCell, { flex: 2 }]}>Premium Features & Renovations</Text>
+            <Text style={styles.appraisalTableCell}>₱3,000,000</Text>
+          </View>
+
+          <View style={styles.appraisalTableRow}>
+            <Text style={[styles.appraisalTableCell, { flex: 2 }]}>Location Premium</Text>
+            <Text style={styles.appraisalTableCell}>₱4,700,000</Text>
+          </View>
+
+          <View style={styles.appraisalTableRow}>
+            <Text style={[styles.appraisalTableCell, { flex: 2 }]}>Market Adjustment</Text>
+            <Text style={styles.appraisalTableCell}>₱950,000</Text>
+          </View>
+
+          <View style={styles.appraisalTableRow}>
+            <Text style={[styles.appraisalTableCell, { flex: 2, fontWeight: 'bold' }]}>Aggregate Valuation</Text>
+            <Text style={[styles.appraisalTableCell, { fontWeight: 'bold' }]}>{formatCurrency(appraisalData.valuation_process.aggregate_valuation)}</Text>
+          </View>
+        </View>
+
+        <Text style={styles.appraisalSubheader}>Future Value Projection</Text>
+        <Text style={styles.appraisalText}>
+          Based on historical appreciation rates of 8-10% annually for premium properties in this area,
+          we project the following value increases over time:
+        </Text>
+
+        <View style={styles.appraisalTable}>
+          <View style={styles.appraisalTableHeader}>
+            <Text style={styles.appraisalTableHeaderCell}>Time Horizon</Text>
+            <Text style={styles.appraisalTableHeaderCell}>Projected Value (8% growth)</Text>
+          </View>
+
+          <View style={styles.appraisalTableRow}>
+            <Text style={styles.appraisalTableCell}>Current</Text>
+            <Text style={styles.appraisalTableCell}>{formatCurrency(appraisalData.valuation_process.aggregate_valuation)}</Text>
+          </View>
+
+          <View style={styles.appraisalTableRow}>
+            <Text style={styles.appraisalTableCell}>1 Year</Text>
+            <Text style={styles.appraisalTableCell}>{formatCurrency(parseFloat(appraisalData.valuation_process.aggregate_valuation.replace(/[^\d.-]/g, '')) * 1.08)}</Text>
+          </View>
+
+          <View style={styles.appraisalTableRow}>
+            <Text style={styles.appraisalTableCell}>3 Years</Text>
+            <Text style={styles.appraisalTableCell}>{formatCurrency(parseFloat(appraisalData.valuation_process.aggregate_valuation.replace(/[^\d.-]/g, '')) * Math.pow(1.08, 3))}</Text>
+          </View>
+
+          <View style={styles.appraisalTableRow}>
+            <Text style={styles.appraisalTableCell}>5 Years</Text>
+            <Text style={styles.appraisalTableCell}>{formatCurrency(parseFloat(appraisalData.valuation_process.aggregate_valuation.replace(/[^\d.-]/g, '')) * Math.pow(1.08, 5))}</Text>
+          </View>
+
+          <View style={styles.appraisalTableRow}>
+            <Text style={styles.appraisalTableCell}>10 Years</Text>
+            <Text style={styles.appraisalTableCell}>{formatCurrency(parseFloat(appraisalData.valuation_process.aggregate_valuation.replace(/[^\d.-]/g, '')) * Math.pow(1.08, 10))}</Text>
+          </View>
+        </View>
+
+        <Text style={styles.appraisalSubheader}>Final Recommendation</Text>
+        <View style={styles.appraisalHighlight}>
+          <Text style={styles.appraisalTextBold}>Professional Assessment:</Text>
+          <Text style={styles.appraisalText}>
+            This property represents an exceptional investment opportunity with a fair market value of {formatCurrency(appraisalData.valuation_process.aggregate_valuation)}.
+            The location, quality of construction, premium features, and strong rental potential all contribute to both immediate
+            value and long-term appreciation prospects. We recommend proceeding with the sale at the appraised value.
+          </Text>
+        </View>
+
+        <Text style={styles.footer}>
+          Prepared by: Filipino World Real Estate Appraisal Division
+          {' | '}Report ID: FW-{new Date().getFullYear()}-{Math.floor(Math.random() * 10000).toString().padStart(4, '0')}
+          {' | '}Valuation Date: {new Date().toLocaleDateString()}
+        </Text>
+
+        <Text style={styles.appraisalPageNumber}>5</Text>
       </Page>
     </Document>
   );

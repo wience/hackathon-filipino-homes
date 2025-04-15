@@ -1,5 +1,7 @@
 import React from "react";
-import { X, ChevronDown, ChevronUp, BarChart, Building, MapPin, Home, Calculator, Clock, FileText, Award, Calendar, Globe } from "lucide-react";
+import { X, ChevronDown, ChevronUp, BarChart, Building, MapPin, Home, Calculator, Clock, FileText, Award, Calendar, Globe, Download } from "lucide-react";
+import { PDFDownloadLink } from "@react-pdf/renderer";
+import { ProjectReportPDF } from "./pdf/project-report-pdf";
 
 interface AppraisalData {
     market_data: {
@@ -27,10 +29,35 @@ interface AppraisalData {
     error?: string;
 }
 
+// Define the property project data interface
+interface PropertyProjectData {
+    project_name: string;
+    location: {
+        city: string;
+        province: string;
+        country: string;
+        latitude: string;
+        longitude: string;
+    };
+    last_updated: string;
+    property_details: {
+        type: string;
+        subtype: string;
+        bedrooms: string;
+        bathrooms: string;
+        land_size: string;
+        floor_area: string;
+        amenities: string[];
+    };
+    price: string;
+    description: string;
+}
+
 interface PropertyAppraisalModalProps {
     isOpen: boolean;
     onClose: () => void;
     appraisalData: AppraisalData | null;
+    formData?: any; // Form data from the page
 }
 
 interface CollapsibleSectionProps {
@@ -73,6 +100,7 @@ const PropertyAppraisalModal: React.FC<PropertyAppraisalModalProps> = ({
     isOpen,
     onClose,
     appraisalData,
+    formData
 }) => {
     if (!isOpen || !appraisalData) return null;
 
@@ -105,6 +133,30 @@ const PropertyAppraisalModal: React.FC<PropertyAppraisalModalProps> = ({
             </div>
         );
     }
+
+    // Prepare project data structure based on the form data
+    const projectData: PropertyProjectData = {
+        project_name: formData?.title || "Property Listing",
+        location: {
+            city: formData?.city || "",
+            province: formData?.province || "",
+            country: "Philippines",
+            latitude: "14.5995",  // Defaults for Philippines
+            longitude: "120.9842"
+        },
+        last_updated: new Date().toISOString(),
+        property_details: {
+            type: formData?.propertyType || "",
+            subtype: formData?.propertySubtype || "",
+            bedrooms: formData?.bedrooms || "",
+            bathrooms: formData?.bathrooms || "",
+            land_size: formData?.landSize || "",
+            floor_area: formData?.floorArea || "",
+            amenities: formData?.amenities || []
+        },
+        price: formData?.price || "",
+        description: formData?.description || ""
+    };
 
     return (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in duration-300">
@@ -249,16 +301,26 @@ const PropertyAppraisalModal: React.FC<PropertyAppraisalModalProps> = ({
 
                 {/* Footer */}
                 <div className="p-4 bg-gray-50 dark:bg-gray-700/50 border-t border-gray-200 dark:border-gray-700 flex justify-end">
-                    <button
-                        onClick={onClose}
-                        className="px-4 py-2 bg-gray-200 hover:bg-gray-300 dark:bg-gray-600 dark:hover:bg-gray-500 text-gray-800 dark:text-gray-200 font-medium rounded-lg transition-colors"
+                    <PDFDownloadLink
+                        document={<ProjectReportPDF projectData={projectData} appraisalData={appraisalData} />}
+                        fileName="property-appraisal-report.pdf"
+                        className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white font-medium rounded-lg transition-colors flex items-center gap-2"
                     >
-                        Close
-                    </button>
+                        {({ blob, url, loading, error }) =>
+                            loading ? (
+                                "Loading document..."
+                            ) : (
+                                <>
+                                    <Download className="h-4 w-4" />
+                                    Download full report
+                                </>
+                            )
+                        }
+                    </PDFDownloadLink>
                 </div>
             </div>
         </div>
     );
 };
 
-export default PropertyAppraisalModal; 
+export default PropertyAppraisalModal;

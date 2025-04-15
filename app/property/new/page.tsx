@@ -224,6 +224,7 @@ Description: ${formData.description}
                 isOpen={showAppraisalModal}
                 onClose={() => setShowAppraisalModal(false)}
                 appraisalData={appraisalData}
+                formData={formData}
             />
         );
     };
