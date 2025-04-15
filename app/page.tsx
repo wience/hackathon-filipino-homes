@@ -93,7 +93,7 @@ export default function Home() {
             transition={{ duration: 0.5 }}
           >
             <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold mb-4 text-blue-800 dark:text-blue-400 leading-tight">
-              Find Your Dream Home
+              Your Future is Here
             </h1>
           </motion.div>
 
