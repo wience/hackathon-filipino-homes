@@ -15,7 +15,7 @@ export function Footer() {
                 <Home className="h-5 w-5 text-white" />
               </div>
               <span className="text-xl font-bold text-blue-700 dark:text-blue-500">
-                Filipino Homes
+                Filipino World
               </span>
             </div>
             <p className="text-sm text-gray-600 dark:text-gray-400">
@@ -74,7 +74,7 @@ export function Footer() {
 
         <div className="border-t border-gray-100 dark:border-gray-800 mt-8 pt-6 text-center">
           <span className="text-gray-500 dark:text-gray-400 text-sm">
-            &copy; {currentYear} Filipino Homes. All rights reserved.
+            &copy; {currentYear} Filipino World. All rights reserved.
           </span>
         </div>
       </div>

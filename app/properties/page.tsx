@@ -50,28 +50,28 @@ function PropertiesLoading() {
         <div className="container mx-auto py-12 px-4">
             <div className="w-full max-w-3xl mx-auto mb-12">
                 <div className="relative">
-                    <Skeleton className="h-16 w-full rounded-full" />
+                    <Skeleton className="h-16 w-full rounded-full dark:bg-gray-700" />
                 </div>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                 {Array.from({ length: 6 }).map((_, index) => (
-                    <Card key={index} className="overflow-hidden">
+                    <Card key={index} className="overflow-hidden dark:bg-gray-800 dark:border-gray-700">
                         <div className="relative h-56 w-full">
-                            <Skeleton className="h-full w-full" />
+                            <Skeleton className="h-full w-full dark:bg-gray-700" />
                         </div>
                         <div className="p-5 flex flex-col h-64">
-                            <Skeleton className="h-4 w-2/3 mb-2" />
-                            <Skeleton className="h-6 w-3/4 mb-2" />
-                            <Skeleton className="h-6 w-1/3 mb-4" />
+                            <Skeleton className="h-4 w-2/3 mb-2 dark:bg-gray-700" />
+                            <Skeleton className="h-6 w-3/4 mb-2 dark:bg-gray-700" />
+                            <Skeleton className="h-6 w-1/3 mb-4 dark:bg-gray-700" />
 
                             <div className="flex justify-between mb-4">
-                                <Skeleton className="h-4 w-16" />
-                                <Skeleton className="h-4 w-16" />
-                                <Skeleton className="h-4 w-16" />
+                                <Skeleton className="h-4 w-16 dark:bg-gray-700" />
+                                <Skeleton className="h-4 w-16 dark:bg-gray-700" />
+                                <Skeleton className="h-4 w-16 dark:bg-gray-700" />
                             </div>
 
                             <div className="mt-auto">
-                                <Skeleton className="h-10 w-full" />
+                                <Skeleton className="h-10 w-full dark:bg-gray-700" />
                             </div>
                         </div>
                     </Card>
@@ -115,7 +115,7 @@ function PropertiesContent() {
                 // Determine if we should call search API or regular properties API
                 let url;
                 if (urlSearchQuery) {
-                    url = `/api/semantic-search?q=${encodeURIComponent(urlSearchQuery)}&limit=12`;
+                    url = `/api/semantic-search?q=${encodeURIComponent(urlSearchQuery)}&page=${currentPage}&limit=12`;
                 } else {
                     url = `/api/properties?page=${currentPage}&limit=12`;
                 }
@@ -128,23 +128,28 @@ function PropertiesContent() {
 
                 const data = await response.json();
 
-                console.log(data)
+                console.log("API Response:", data);
 
                 // Handle different response structures
                 if (urlSearchQuery) {
-                    // Handle search results format
+                    // Handle semantic search results format
                     setProperties(data.results || []);
 
-                    // Create a simple pagination object for search results
-                    const totalItems = data.results?.length || 0;
-                    setPagination({
-                        total: totalItems,
-                        page: 1,
-                        limit: 12,
-                        totalPages: 1,
-                        hasNextPage: false,
-                        hasPrevPage: false
-                    });
+                    // Use the pagination from the API response
+                    if (data.pagination) {
+                        setPagination(data.pagination);
+                    } else {
+                        // Fallback if pagination isn't provided
+                        const totalItems = data.results?.length || 0;
+                        setPagination({
+                            total: totalItems,
+                            page: currentPage,
+                            limit: 12,
+                            totalPages: Math.ceil(totalItems / 12),
+                            hasNextPage: false,
+                            hasPrevPage: currentPage > 1
+                        });
+                    }
                 } else {
                     // Handle paginated results format
                     setProperties(data.properties || []);
@@ -189,11 +194,11 @@ function PropertiesContent() {
                         placeholder="Search for properties..."
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        className="pl-16 pr-40 py-8 text-xl border-2 border-blue-500 dark:border-blue-600 shadow-lg focus:border-blue-600 focus:ring-blue-500 rounded-full dark:bg-gray-800 dark:text-white"
+                        className="pl-16 pr-40 py-8 text-xl border-2 border-blue-500 dark:border-blue-600 shadow-lg focus:border-blue-600 focus:ring-blue-500 rounded-full dark:bg-gray-800 dark:text-white dark:placeholder-gray-400"
                     />
                     <Button
                         type="submit"
-                        className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 text-white font-bold py-3 px-8 rounded-full transition duration-300 text-lg h-14"
+                        className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 dark:from-blue-700 dark:to-blue-500 dark:hover:from-blue-800 dark:hover:to-blue-600 text-white font-bold py-3 px-8 rounded-full transition duration-300 text-lg h-14"
                     >
                         Search
                     </Button>
@@ -205,23 +210,23 @@ function PropertiesContent() {
                     {/* Skeleton Loading State */}
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                         {Array.from({ length: 6 }).map((_, index) => (
-                            <Card key={index} className="overflow-hidden">
+                            <Card key={index} className="overflow-hidden dark:bg-gray-800 dark:border-gray-700">
                                 <div className="relative h-56 w-full">
-                                    <Skeleton className="h-full w-full" />
+                                    <Skeleton className="h-full w-full dark:bg-gray-700" />
                                 </div>
                                 <div className="p-5 flex flex-col h-64">
-                                    <Skeleton className="h-4 w-2/3 mb-2" />
-                                    <Skeleton className="h-6 w-3/4 mb-2" />
-                                    <Skeleton className="h-6 w-1/3 mb-4" />
+                                    <Skeleton className="h-4 w-2/3 mb-2 dark:bg-gray-700" />
+                                    <Skeleton className="h-6 w-3/4 mb-2 dark:bg-gray-700" />
+                                    <Skeleton className="h-6 w-1/3 mb-4 dark:bg-gray-700" />
 
                                     <div className="flex justify-between mb-4">
-                                        <Skeleton className="h-4 w-16" />
-                                        <Skeleton className="h-4 w-16" />
-                                        <Skeleton className="h-4 w-16" />
+                                        <Skeleton className="h-4 w-16 dark:bg-gray-700" />
+                                        <Skeleton className="h-4 w-16 dark:bg-gray-700" />
+                                        <Skeleton className="h-4 w-16 dark:bg-gray-700" />
                                     </div>
 
                                     <div className="mt-auto">
-                                        <Skeleton className="h-10 w-full" />
+                                        <Skeleton className="h-10 w-full dark:bg-gray-700" />
                                     </div>
                                 </div>
                             </Card>
@@ -229,15 +234,15 @@ function PropertiesContent() {
                     </div>
                 </div>
             ) : error ? (
-                <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-md">
+                <div className="bg-red-100 border border-red-400 text-red-700 dark:bg-red-900/20 dark:border-red-800 dark:text-red-400 px-4 py-3 rounded-md">
                     {error}
                 </div>
             ) : properties.length === 0 ? (
                 <div className="text-center py-20">
-                    <h2 className="text-2xl font-semibold text-gray-600 mb-4">No properties found</h2>
-                    <p className="mb-8">Try adjusting your search criteria or browse our available listings.</p>
+                    <h2 className="text-2xl font-semibold text-gray-600 dark:text-gray-300 mb-4">No properties found</h2>
+                    <p className="mb-8 dark:text-gray-400">Try adjusting your search criteria or browse our available listings.</p>
                     <Link href="/">
-                        <Button className="bg-blue-600 hover:bg-blue-700">Back to Home</Button>
+                        <Button className="bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800">Back to Home</Button>
                     </Link>
                 </div>
             ) : (
@@ -247,7 +252,7 @@ function PropertiesContent() {
                         {properties.map((property) => (
                             <div
                                 key={property.id}
-                                className="bg-white rounded-xl overflow-hidden shadow-md hover:shadow-lg transition-shadow duration-300 border border-gray-200 flex flex-col"
+                                className="bg-white dark:bg-gray-800 rounded-xl overflow-hidden shadow-md hover:shadow-lg transition-shadow duration-300 border border-gray-200 dark:border-gray-700 flex flex-col"
                             >
                                 <div className="relative h-56 w-full overflow-hidden">
                                     <Image
@@ -263,22 +268,22 @@ function PropertiesContent() {
                                 </div>
 
                                 <div className="p-5 flex flex-col flex-grow">
-                                    <div className="flex items-center text-sm text-gray-500 mb-2">
+                                    <div className="flex items-center text-sm text-gray-500 dark:text-gray-400 mb-2">
                                         <span className="flex items-center">
-                                            <MapPin className="w-4 h-4 mr-1 text-blue-500" />
+                                            <MapPin className="w-4 h-4 mr-1 text-blue-500 dark:text-blue-400" />
                                             {property.property_address}
                                         </span>
                                     </div>
 
-                                    <h3 className="font-bold text-xl mb-2 text-gray-800 line-clamp-2">
+                                    <h3 className="font-bold text-xl mb-2 text-gray-800 dark:text-gray-100 line-clamp-2">
                                         {property.property_name}
                                     </h3>
 
-                                    <p className="text-blue-600 text-xl font-bold mb-4">
+                                    <p className="text-blue-600 dark:text-blue-400 text-xl font-bold mb-4">
                                         {formatCurrency(property.property_price)}
                                     </p>
 
-                                    <div className="flex justify-between text-sm text-gray-600">
+                                    <div className="flex justify-between text-sm text-gray-600 dark:text-gray-300">
                                         {property.property_bedroom && parseInt(property.property_bedroom) > 0 && (
                                             <span className="flex items-center">
                                                 <Home className="w-4 h-4 mr-1" />
@@ -303,7 +308,7 @@ function PropertiesContent() {
 
                                     <div className="mt-auto pt-4">
                                         <Link href={`/property/${property.id}`}>
-                                            <Button className="w-full bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600">
+                                            <Button className="w-full bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 dark:from-blue-700 dark:to-blue-500 dark:hover:from-blue-800 dark:hover:to-blue-600">
                                                 View Details
                                             </Button>
                                         </Link>
@@ -318,7 +323,7 @@ function PropertiesContent() {
                         <div className="flex justify-center mt-12 space-x-2">
                             {pagination.hasPrevPage && (
                                 <Link href={getPageUrl(pagination.page - 1)}>
-                                    <Button variant="outline" className="flex items-center gap-2">
+                                    <Button variant="outline" className="flex items-center gap-2 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-700">
                                         <ChevronLeft className="w-4 h-4" />
                                         Previous
                                     </Button>
@@ -326,14 +331,14 @@ function PropertiesContent() {
                             )}
 
                             <div className="flex items-center px-4">
-                                <span className="text-gray-600">
+                                <span className="text-gray-600 dark:text-gray-300">
                                     Page {pagination.page} of {pagination.totalPages}
                                 </span>
                             </div>
 
                             {pagination.hasNextPage && (
                                 <Link href={getPageUrl(pagination.page + 1)}>
-                                    <Button variant="outline" className="flex items-center gap-2">
+                                    <Button variant="outline" className="flex items-center gap-2 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-700">
                                         Next
                                         <ChevronRight className="w-4 h-4" />
                                     </Button>
