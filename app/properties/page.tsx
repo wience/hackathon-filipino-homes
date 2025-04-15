@@ -4,11 +4,50 @@ import { useState, useEffect, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
-import { MapPin, Home, Bath, Maximize, ChevronLeft, ChevronRight, Search } from "lucide-react";
+import { MapPin, Home, Bath, Maximize, ChevronLeft, ChevronRight, Search, Globe } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
+import { PanoramaCard } from "@/components/panorama-card";
+
+// Hardcoded properties with panorama
+const PANORAMA_PROPERTIES = {
+    1: {
+        id: 1,
+        property_name: "Modern Living Room with Panoramic View",
+        property_price: "5000000",
+        property_address: "123 Panorama Street, Manila",
+        property_bedroom: "3",
+        property_bathroom: "2",
+        property_floor: "150",
+        property_type: "Residential",
+        property_subtype: "Condominium",
+        property_featured_photo: "/images/panorama-living-room.jpg",
+        property_description: "Experience this stunning modern living room in 360° view. The space features contemporary design with ample natural light and premium finishes.",
+        category: {
+            property_category_name: "Luxury"
+        },
+        isPanorama: true
+    },
+    2: {
+        id: 2,
+        property_name: "Modern Empty Interior with Panoramic View",
+        property_price: "4500000",
+        property_address: "456 Modern Avenue, Makati",
+        property_bedroom: "2",
+        property_bathroom: "2",
+        property_floor: "120",
+        property_type: "Residential",
+        property_subtype: "Condominium",
+        property_featured_photo: "/images/empty-modern-room.jpg",
+        property_description: "A modern empty interior space perfect for customization. Features clean lines, abundant natural light, and a contemporary design aesthetic.",
+        category: {
+            property_category_name: "Modern"
+        },
+        isPanorama: true
+    }
+};
 
 // Type for property data
 interface Property {
@@ -249,73 +288,82 @@ function PropertiesContent() {
                 <>
                     {/* Property Grid */}
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                        {properties.map((property) => (
-                            <div
-                                key={property.id}
-                                className="bg-white dark:bg-gray-800 rounded-xl overflow-hidden shadow-md hover:shadow-lg transition-shadow duration-300 border border-gray-200 dark:border-gray-700 flex flex-col"
-                            >
-                                <div className="relative h-56 w-full overflow-hidden">
-                                    <Image
-                                        src={property.property_featured_photo}
-                                        alt={property.property_name}
-                                        fill
-                                        style={{ objectFit: "cover" }}
-                                        className="hover:scale-105 transition-transform duration-300"
-                                    />
-                                    <div className="absolute top-0 left-0 bg-blue-600 text-white py-1 px-3 m-2 rounded-md text-sm font-medium">
-                                        {property.property_type}
-                                    </div>
-                                </div>
-
-                                <div className="p-5 flex flex-col flex-grow">
-                                    <div className="flex items-center text-sm text-gray-500 dark:text-gray-400 mb-2">
-                                        <span className="flex items-center">
-                                            <MapPin className="w-4 h-4 mr-1 text-blue-500 dark:text-blue-400" />
-                                            {property.property_address}
-                                        </span>
-                                    </div>
-
-                                    <h3 className="font-bold text-xl mb-2 text-gray-800 dark:text-gray-100 line-clamp-2">
-                                        {property.property_name}
-                                    </h3>
-
-                                    <p className="text-blue-600 dark:text-blue-400 text-xl font-bold mb-4">
-                                        {formatCurrency(property.property_price)}
-                                    </p>
-
-                                    <div className="flex justify-between text-sm text-gray-600 dark:text-gray-300">
-                                        {property.property_bedroom && parseInt(property.property_bedroom) > 0 && (
-                                            <span className="flex items-center">
-                                                <Home className="w-4 h-4 mr-1" />
-                                                {property.property_bedroom} Bed{parseInt(property.property_bedroom) !== 1 ? 's' : ''}
-                                            </span>
-                                        )}
-
-                                        {property.property_bathroom && parseInt(property.property_bathroom) > 0 && (
-                                            <span className="flex items-center">
-                                                <Bath className="w-4 h-4 mr-1" />
-                                                {property.property_bathroom} Bath{parseInt(property.property_bathroom) !== 1 ? 's' : ''}
-                                            </span>
-                                        )}
-
-                                        {property.property_floor && parseInt(property.property_floor) > 0 && (
-                                            <span className="flex items-center">
-                                                <Maximize className="w-4 h-4 mr-1" />
-                                                {property.property_floor} m²
-                                            </span>
-                                        )}
-                                    </div>
-
-                                    <div className="mt-auto pt-4">
-                                        <Link href={`/property/${property.id}`}>
-                                            <Button className="w-full bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 dark:from-blue-700 dark:to-blue-500 dark:hover:from-blue-800 dark:hover:to-blue-600">
-                                                View Details
-                                            </Button>
-                                        </Link>
-                                    </div>
-                                </div>
-                            </div>
+                        {/* Panorama Properties - Only show on first page and when not searching */}
+                        {!urlSearchQuery && currentPage === 1 && Object.values(PANORAMA_PROPERTIES).map((property) => (
+                            <PanoramaCard key={property.id} property={property} />
                         ))}
+
+                        {/* Regular Properties */}
+                        {properties
+                            // If on first page and not searching, only display first 10 properties to make room for panorama cards
+                            .slice(0, (!urlSearchQuery && currentPage === 1) ? 10 : properties.length)
+                            .map((property) => (
+                                <div
+                                    key={property.id}
+                                    className="bg-white dark:bg-gray-800 rounded-xl overflow-hidden shadow-md hover:shadow-lg transition-shadow duration-300 border border-gray-200 dark:border-gray-700 flex flex-col"
+                                >
+                                    <div className="relative h-56 w-full overflow-hidden">
+                                        <Image
+                                            src={property.property_featured_photo}
+                                            alt={property.property_name}
+                                            fill
+                                            style={{ objectFit: "cover" }}
+                                            className="hover:scale-105 transition-transform duration-300"
+                                        />
+                                        <div className="absolute top-0 left-0 bg-blue-600 text-white py-1 px-3 m-2 rounded-md text-sm font-medium">
+                                            {property.property_type}
+                                        </div>
+                                    </div>
+
+                                    <div className="p-5 flex flex-col flex-grow">
+                                        <div className="flex items-center text-sm text-gray-500 dark:text-gray-400 mb-2">
+                                            <span className="flex items-center">
+                                                <MapPin className="w-4 h-4 mr-1 text-blue-500 dark:text-blue-400" />
+                                                {property.property_address}
+                                            </span>
+                                        </div>
+
+                                        <h3 className="font-bold text-xl mb-2 text-gray-800 dark:text-gray-100 line-clamp-2">
+                                            {property.property_name}
+                                        </h3>
+
+                                        <p className="text-blue-600 dark:text-blue-400 text-xl font-bold mb-4">
+                                            {formatCurrency(property.property_price)}
+                                        </p>
+
+                                        <div className="flex justify-between text-sm text-gray-600 dark:text-gray-300">
+                                            {property.property_bedroom && parseInt(property.property_bedroom) > 0 && (
+                                                <span className="flex items-center">
+                                                    <Home className="w-4 h-4 mr-1" />
+                                                    {property.property_bedroom} Bed{parseInt(property.property_bedroom) !== 1 ? 's' : ''}
+                                                </span>
+                                            )}
+
+                                            {property.property_bathroom && parseInt(property.property_bathroom) > 0 && (
+                                                <span className="flex items-center">
+                                                    <Bath className="w-4 h-4 mr-1" />
+                                                    {property.property_bathroom} Bath{parseInt(property.property_bathroom) !== 1 ? 's' : ''}
+                                                </span>
+                                            )}
+
+                                            {property.property_floor && parseInt(property.property_floor) > 0 && (
+                                                <span className="flex items-center">
+                                                    <Maximize className="w-4 h-4 mr-1" />
+                                                    {property.property_floor} m²
+                                                </span>
+                                            )}
+                                        </div>
+
+                                        <div className="mt-auto pt-4">
+                                            <Link href={`/property/${property.id}`}>
+                                                <Button className="w-full bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 dark:from-blue-700 dark:to-blue-500 dark:hover:from-blue-800 dark:hover:to-blue-600">
+                                                    View Details
+                                                </Button>
+                                            </Link>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
                     </div>
 
                     {/* Pagination Controls */}
@@ -350,4 +398,4 @@ function PropertiesContent() {
             )}
         </div>
     );
-} 
+}
