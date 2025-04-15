@@ -18,14 +18,18 @@ export default function Home() {
 
   // Array of placeholder texts to cycle through
   const placeholderTexts = [
-    "I want to buy a house in Lahug",
-    "I'm looking for a house with 2 bedrooms",
-    "Condo for rent in Cebu City",
-    "Affordable apartments near Ayala Mall",
-    "House and lot for sale in Mandaue",
-    "Commercial property in Makati",
-    "Beachfront property in Mactan",
-    "Townhouse with parking in BGC"
+    "3-bedroom house in Banilad, Cebu City with garden under 6M pesos",
+    "Luxury condo in Cebu Business Park with swimming pool and gym access",
+    "Studio apartment for rent in IT Park, Cebu City for 15-20K monthly",
+    "Beachfront property in Mactan, Cebu with direct ocean access",
+    "Commercial space for lease in Mandaue City, at least 150sqm",
+    "House and lot in Maria Luisa Subdivision with 24/7 security",
+    "Affordable 1-bedroom condo in Mabolo for young professionals",
+    "Lot for sale in Talisay City, Cebu with mountain view",
+    "Townhouse in Talamban near schools and universities",
+    "Office space in Cebu IT Park, 200-300sqm with parking slots",
+    "Duplex house in Lapu-Lapu City with separate entrance",
+    "Pre-selling condo in Cebu Downtown with flexible payment terms"
   ];
 
   useEffect(() => {
@@ -67,19 +71,10 @@ export default function Home() {
 
     setIsLoading(true);
     try {
-      // Use our semantic search API endpoint
-      const response = await fetch(`/api/semantic-search?q=${encodeURIComponent(searchQuery)}`);
-
-      if (!response.ok) {
-        throw new Error(`Search request failed with status: ${response.status}`);
-      }
-
-      const data = await response.json();
-
-      // For now, just redirect to properties page with the search query
+      // Directly redirect to properties page with the search query
       router.push(`/properties?search=${encodeURIComponent(searchQuery)}`);
     } catch (error) {
-      console.error("Error processing search:", error);
+      console.error("Error navigating:", error);
     } finally {
       setIsLoading(false);
     }
@@ -136,9 +131,16 @@ export default function Home() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.4 }}
           >
-            <p className="text-lg text-gray-700 dark:text-gray-300">
-              Search thousands of properties across the Philippines. Find houses, condos, apartments, and more.
+            <p className="text-lg text-gray-700 dark:text-gray-300 mb-6">
+              Search thousands of listings across the Philippines — residential, commercial, and investment properties all in one place.
             </p>
+            <Button
+              onClick={() => router.push('/properties')}
+              variant="outline"
+              className="bg-white dark:bg-gray-800 text-blue-600 dark:text-blue-400 border-blue-500 hover:bg-blue-50 dark:hover:bg-gray-700 font-medium text-lg px-8 py-3 rounded-xl"
+            >
+              <HomeIcon className="mr-2 h-5 w-5" /> View All Properties
+            </Button>
           </motion.div>
         </div>
       </div>
@@ -148,7 +150,7 @@ export default function Home() {
         <div className="container mx-auto px-4">
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4">
-              Why Choose <span className="text-blue-600 dark:text-blue-400">Filipino Homes</span>
+              Why Choose <span className="text-blue-600 dark:text-blue-400">Filipino World</span>
             </h2>
             <p className="text-lg text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
               We&apos;re committed to helping you find the perfect property in the Philippines

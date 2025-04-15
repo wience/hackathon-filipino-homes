@@ -237,7 +237,7 @@ const MapboxMap: React.FC<MapboxMapProps> = ({
       map.flyTo({
         center: [currentCenter.lng, currentCenter.lat],
         zoom: finalZoom,
-        duration: 2500,
+        duration: 1500,
         easing: (t) => t,
       });
 
