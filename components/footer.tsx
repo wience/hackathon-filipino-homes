@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { Home, Phone, Mail, Instagram, Facebook, Twitter } from "lucide-react";
+import Image from "next/image";
+import { Phone, Mail, Instagram, Facebook, Twitter } from "lucide-react";
 
 export function Footer() {
   const currentYear = new Date().getFullYear();
@@ -11,11 +12,16 @@ export function Footer() {
           {/* Company Info */}
           <div className="space-y-4">
             <div className="flex items-center space-x-2">
-              <div className="bg-gradient-to-r from-blue-500 to-blue-600 p-1.5 rounded-lg">
-                <Home className="h-5 w-5 text-white" />
+              <div className="relative w-10 h-10">
+                <Image
+                  src="/images/filipinoworldlogo.png"
+                  alt="Filipino World Logo"
+                  fill
+                  className="object-contain"
+                />
               </div>
               <span className="text-xl font-bold text-blue-700 dark:text-blue-500">
-                Filipino Homes
+                Filipino World
               </span>
             </div>
             <p className="text-sm text-gray-600 dark:text-gray-400">
@@ -59,23 +65,20 @@ export function Footer() {
           {/* Contact */}
           <div className="space-y-4">
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Contact Us</h3>
-            <div className="space-y-3">
-              <p className="flex items-center gap-3 text-gray-600 dark:text-gray-400">
+            <ul className="space-y-2">
+              <li className="flex items-center space-x-2">
                 <Phone className="h-4 w-4 text-blue-500" />
-                <span>+63 (2) 8123 4567</span>
-              </p>
-              <p className="flex items-center gap-3 text-gray-600 dark:text-gray-400">
-                <Mail className="h-4 w-4 text-red-500" />
-                <span>info@filipinohomes.com</span>
-              </p>
-            </div>
+                <span className="text-gray-600 dark:text-gray-400">+63 912 345 6789</span>
+              </li>
+              <li className="flex items-center space-x-2">
+                <Mail className="h-4 w-4 text-blue-500" />
+                <span className="text-gray-600 dark:text-gray-400">info@filipinoworld.com</span>
+              </li>
+            </ul>
           </div>
         </div>
-
-        <div className="border-t border-gray-100 dark:border-gray-800 mt-8 pt-6 text-center">
-          <span className="text-gray-500 dark:text-gray-400 text-sm">
-            &copy; {currentYear} Filipino Homes. All rights reserved.
-          </span>
+        <div className="mt-8 pt-8 border-t border-gray-100 dark:border-gray-800 text-center text-sm text-gray-600 dark:text-gray-400">
+          © {currentYear} Filipino World. All rights reserved.
         </div>
       </div>
     </footer>
