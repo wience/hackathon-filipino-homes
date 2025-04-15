@@ -29,10 +29,35 @@ interface AppraisalData {
     error?: string;
 }
 
+// Define the property project data interface
+interface PropertyProjectData {
+    project_name: string;
+    location: {
+        city: string;
+        province: string;
+        country: string;
+        latitude: string;
+        longitude: string;
+    };
+    last_updated: string;
+    property_details: {
+        type: string;
+        subtype: string;
+        bedrooms: string;
+        bathrooms: string;
+        land_size: string;
+        floor_area: string;
+        amenities: string[];
+    };
+    price: string;
+    description: string;
+}
+
 interface PropertyAppraisalModalProps {
     isOpen: boolean;
     onClose: () => void;
     appraisalData: AppraisalData | null;
+    formData?: any; // Form data from the page
 }
 
 interface CollapsibleSectionProps {
@@ -75,6 +100,7 @@ const PropertyAppraisalModal: React.FC<PropertyAppraisalModalProps> = ({
     isOpen,
     onClose,
     appraisalData,
+    formData
 }) => {
     if (!isOpen || !appraisalData) return null;
 
@@ -108,54 +134,28 @@ const PropertyAppraisalModal: React.FC<PropertyAppraisalModalProps> = ({
         );
     }
 
-    // Create project data for the PDF
-    const projectData = {
-        project_name: "Property Appraisal",
+    // Prepare project data structure based on the form data
+    const projectData: PropertyProjectData = {
+        project_name: formData?.title || "Property Listing",
         location: {
-            city: "Location",
+            city: formData?.city || "",
+            province: formData?.province || "",
             country: "Philippines",
-            latitude: 0,
-            longitude: 0,
-            images: []
+            latitude: "14.5995",  // Defaults for Philippines
+            longitude: "120.9842"
         },
-        sustainability_score: {
-            weights: {
-                "Climate & Weather Data": { weight: 0, justification: "" },
-                "Air Quality & Pollution": { weight: 0, justification: "" },
-                "Disaster Risk & Hazard Data": { weight: 0, justification: "" },
-                "Biodiversity & Ecosystem Health": { weight: 0, justification: "" },
-                "Renewable Energy & Infrastructure Feasibility": { weight: 0, justification: "" }
-            },
-            scores: {
-                "Climate & Weather Data": { raw_score: 0, weighted_score: 0 },
-                "Air Quality & Pollution": { raw_score: 0, weighted_score: 0 },
-                "Disaster Risk & Hazard Data": { raw_score: 0, weighted_score: 0 },
-                "Biodiversity & Ecosystem Health": { raw_score: 0, weighted_score: 0 },
-                "Renewable Energy & Infrastructure Feasibility": { raw_score: 0, weighted_score: 0 }
-            },
-            overall_score: 0
+        last_updated: new Date().toISOString(),
+        property_details: {
+            type: formData?.propertyType || "",
+            subtype: formData?.propertySubtype || "",
+            bedrooms: formData?.bedrooms || "",
+            bathrooms: formData?.bathrooms || "",
+            land_size: formData?.landSize || "",
+            floor_area: formData?.floorArea || "",
+            amenities: formData?.amenities || []
         },
-        feasibility_report: {
-            status: "Not Applicable",
-            key_findings: [],
-            recommendations: []
-        },
-        risk_analysis: {
-            flood_risk_level: { value: "", explanation: "" },
-            earthquake_risk_level: { value: "", explanation: "" },
-            pollution_level: { value: "", explanation: "" },
-            biodiversity_threats: { value: "", explanation: "" },
-            climate_risk_summary: { value: "", explanation: "" }
-        },
-        policy_compliance: {
-            local_regulations: [],
-            international_guidelines: []
-        },
-        funding_opportunities: [],
-        api_context_data: {
-            api: []
-        },
-        last_updated: new Date().toISOString()
+        price: formData?.price || "",
+        description: formData?.description || ""
     };
 
     return (
