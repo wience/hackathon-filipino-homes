@@ -34,8 +34,7 @@ Event Name: [Name of the event]
 
 Event Details: [Date, time, venue, a brief description, and any other relevant details]
 
-Source: [Exact Link of the source]
-
+Source: [Just the name of the source]
 
 
 
@@ -49,13 +48,13 @@ Events for [Location]
             ],
         };
 
-        const model = 'gemini-2.5-pro-preview-03-25';
+        const model = 'gemini-2.0-flash';
         const searchContents = [
             {
                 role: 'user',
                 parts: [
                     {
-                        text: location,
+                        text: `Upcoming Events for ${location} and events this month`,
                     },
                 ],
             },

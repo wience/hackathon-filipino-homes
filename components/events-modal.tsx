@@ -124,15 +124,9 @@ export function EventsModal({ isOpen, onClose, location }: EventsModalProps) {
                                         ))}
                                     </div>
                                     <div className="flex items-center mt-4 text-sm">
-                                        <a
-                                            href={event["Source"]}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="flex items-center text-blue-600 dark:text-blue-400 hover:underline"
-                                        >
-                                            <ExternalLink className="h-4 w-4 mr-1" />
-                                            <span>Source</span>
-                                        </a>
+                                        <span className="text-gray-600 dark:text-gray-400">
+                                            Source: {event["Source"]}
+                                        </span>
                                     </div>
                                 </div>
                             ))}

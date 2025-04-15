@@ -163,9 +163,9 @@ export default function Home() {
               <div className="bg-blue-100 dark:bg-blue-800/40 w-16 h-16 mx-auto rounded-full flex items-center justify-center mb-6">
                 <Search className="h-8 w-8 text-blue-600 dark:text-blue-400" />
               </div>
-              <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-3">Extensive Listings</h3>
+              <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-3">Property Search Agent</h3>
               <p className="text-gray-600 dark:text-gray-400">
-                Access thousands of properties across the Philippines, from luxurious condos to affordable homes.
+                Our intelligent search agent helps you find properties that match your specific requirements and preferences.
               </p>
             </div>
 
@@ -174,9 +174,9 @@ export default function Home() {
               <div className="bg-red-100 dark:bg-red-800/40 w-16 h-16 mx-auto rounded-full flex items-center justify-center mb-6">
                 <Building className="h-8 w-8 text-red-600 dark:text-red-400" />
               </div>
-              <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-3">Expert Agents</h3>
+              <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-3">AI Property Appraisal</h3>
               <p className="text-gray-600 dark:text-gray-400">
-                Our professional agents have deep knowledge of local markets to guide you through your property journey.
+                Get accurate property valuations powered by our advanced AI system that analyzes market trends and comparable properties.
               </p>
             </div>
 
@@ -185,9 +185,9 @@ export default function Home() {
               <div className="bg-yellow-100 dark:bg-yellow-800/40 w-16 h-16 mx-auto rounded-full flex items-center justify-center mb-6">
                 <MapPin className="h-8 w-8 text-yellow-600 dark:text-yellow-400" />
               </div>
-              <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-3">Prime Locations</h3>
+              <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-3">Extensive Listings</h3>
               <p className="text-gray-600 dark:text-gray-400">
-                Find properties in the most desirable locations, from city centers to peaceful provincial areas.
+                Access thousands of properties across the Philippines, from luxurious condos to affordable homes.
               </p>
             </div>
           </div>
