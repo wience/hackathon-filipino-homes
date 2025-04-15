@@ -122,29 +122,20 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 
     try {
         await client.connect();
-        console.log("Connected to MongoDB for vector search");
+        console.log("Connected to MongoDB for combined search");
 
         const database = client.db(dbName);
         const collection = database.collection(collectionName);
 
-        // Store for pagination information
-        let pagination;
-        let searchType = "vector";
-
-        // For vector search, we need to:
-        // 1. Get all results that meet minimum score
-        // 2. Calculate total for pagination
-        // 3. Then apply pagination (slice) to results
-
-        // Perform vector search with score filtering
-        const allResults = await collection.aggregate([
+        // 1. Perform vector search first
+        const vectorResults = await collection.aggregate([
             {
                 $vectorSearch: {
                     index: "vector_index",
                     path: "embedding",
                     queryVector: queryEmbedding,
-                    numCandidates: limit * 30, // Increase candidates to ensure enough results
-                    limit: limit * 10  // Get enough results for multiple pages
+                    numCandidates: limit * 30,
+                    limit: limit * 5  // Get enough results but limit to avoid excessive results
                 }
             },
             {
@@ -165,58 +156,56 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
                     property_location_geo_coordinates: 1,
                     category: 1,
                     score: { $meta: "vectorSearchScore" },
-                    searchType: { $literal: "vector" } // Mark as vector search result
+                    searchType: { $literal: "vector" }
                 }
             },
             {
                 $match: {
-                    score: { $gte: minScore } // Filter results by minimum score
+                    score: { $gte: minScore }
                 }
             }
         ]).toArray();
 
-        // Calculate pagination for vector search
-        let results;
+        console.log(`Found ${vectorResults.length} vector results with score >= ${minScore}`);
 
-        if (allResults.length > 0) {
-            // Log detailed score information
-            console.log(`Found ${allResults.length} vector results with score >= ${minScore}`);
-            console.log("--- Search Results Scores (Top 10) ---");
-            allResults.slice(0, 10).forEach((result, index) => {
+        // 2. Perform text search
+        const textSearchResults = await performTextSearch(collection, query, 1, limit * 2);
+        console.log(`Found ${textSearchResults.total} results from text search`);
+
+        // 3. Combine results and remove duplicates based on property id
+        const vectorIds = new Set(vectorResults.map(item => item.id));
+        const uniqueTextResults = textSearchResults.results.filter(item => !vectorIds.has(item.id));
+
+        // Combine vector and text results, prioritizing vector results
+        const combinedResults = [...vectorResults, ...uniqueTextResults];
+
+        // Total count of all unique results
+        const totalResults = combinedResults.length;
+        console.log(`Combined unique results: ${totalResults}`);
+
+        // Apply pagination to the combined results
+        const pagination = calculatePagination(page, limit, totalResults);
+        const startIndex = (page - 1) * limit;
+        const endIndex = Math.min(startIndex + limit, totalResults);
+        const paginatedResults = combinedResults.slice(startIndex, endIndex);
+
+        // Log info about the returned results
+        if (vectorResults.length > 0) {
+            console.log("--- Top Vector Search Results ---");
+            vectorResults.slice(0, 3).forEach((result, index) => {
                 console.log(`Result #${index + 1}: ${result.property_name} - Score: ${result.score?.toFixed(4) || 'N/A'}`);
             });
-            console.log("---------------------------");
-
-            // Calculate pagination
-            const total = allResults.length;
-            pagination = calculatePagination(page, limit, total);
-
-            // Apply pagination by slicing the results
-            const startIndex = (page - 1) * limit;
-            const endIndex = Math.min(startIndex + limit, total);
-            results = allResults.slice(startIndex, endIndex);
-
-            console.log(`Returning page ${page} (${startIndex}-${endIndex}) of ${total} vector results`);
-        } else {
-            // If no results from vector search, fall back to text search
-            console.log("No vector search results found, falling back to text search");
-            searchType = "text";
-
-            // Text search with pagination
-            const textSearchResults = await performTextSearch(collection, query, page, limit);
-            results = textSearchResults.results;
-            pagination = calculatePagination(page, limit, textSearchResults.total);
-
-            console.log(`Found ${textSearchResults.total} results from text search fallback, showing page ${page}`);
         }
 
         return NextResponse.json({
-            results,
+            results: paginatedResults,
             pagination,
             metadata: {
                 query,
                 minScore,
-                searchType
+                searchType: "combined",
+                vectorResultsCount: vectorResults.length,
+                textResultsCount: uniqueTextResults.length
             }
         });
 
