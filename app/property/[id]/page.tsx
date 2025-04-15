@@ -379,7 +379,7 @@ export default function PropertyDetail() {
                                     {photos.map((photo, index) => (
                                         <div
                                             key={index}
-                                            className={`relative h-20 w-32 flex-shrink-0 cursor-pointer rounded-md overflow-hidden 
+                                            className={`relative h-20 w-32 flex-shrink-0 cursor-pointer rounded-md overflow-hidden
                                                 ${index === selectedImageIndex ? "ring-2 ring-blue-600 dark:ring-blue-400" : "opacity-70 hover:opacity-100"}`}
                                             onClick={() => setSelectedImageIndex(index)}
                                         >
@@ -582,4 +582,4 @@ export default function PropertyDetail() {
             </div>
         </div>
     );
-} 
+}

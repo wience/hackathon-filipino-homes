@@ -1,5 +1,7 @@
 import React from "react";
-import { X, ChevronDown, ChevronUp, BarChart, Building, MapPin, Home, Calculator, Clock, FileText, Award, Calendar, Globe } from "lucide-react";
+import { X, ChevronDown, ChevronUp, BarChart, Building, MapPin, Home, Calculator, Clock, FileText, Award, Calendar, Globe, Download } from "lucide-react";
+import { PDFDownloadLink } from "@react-pdf/renderer";
+import { ProjectReportPDF } from "./pdf/project-report-pdf";
 
 interface AppraisalData {
     market_data: {
@@ -105,6 +107,56 @@ const PropertyAppraisalModal: React.FC<PropertyAppraisalModalProps> = ({
             </div>
         );
     }
+
+    // Create project data for the PDF
+    const projectData = {
+        project_name: "Property Appraisal",
+        location: {
+            city: "Location",
+            country: "Philippines",
+            latitude: 0,
+            longitude: 0,
+            images: []
+        },
+        sustainability_score: {
+            weights: {
+                "Climate & Weather Data": { weight: 0, justification: "" },
+                "Air Quality & Pollution": { weight: 0, justification: "" },
+                "Disaster Risk & Hazard Data": { weight: 0, justification: "" },
+                "Biodiversity & Ecosystem Health": { weight: 0, justification: "" },
+                "Renewable Energy & Infrastructure Feasibility": { weight: 0, justification: "" }
+            },
+            scores: {
+                "Climate & Weather Data": { raw_score: 0, weighted_score: 0 },
+                "Air Quality & Pollution": { raw_score: 0, weighted_score: 0 },
+                "Disaster Risk & Hazard Data": { raw_score: 0, weighted_score: 0 },
+                "Biodiversity & Ecosystem Health": { raw_score: 0, weighted_score: 0 },
+                "Renewable Energy & Infrastructure Feasibility": { raw_score: 0, weighted_score: 0 }
+            },
+            overall_score: 0
+        },
+        feasibility_report: {
+            status: "Not Applicable",
+            key_findings: [],
+            recommendations: []
+        },
+        risk_analysis: {
+            flood_risk_level: { value: "", explanation: "" },
+            earthquake_risk_level: { value: "", explanation: "" },
+            pollution_level: { value: "", explanation: "" },
+            biodiversity_threats: { value: "", explanation: "" },
+            climate_risk_summary: { value: "", explanation: "" }
+        },
+        policy_compliance: {
+            local_regulations: [],
+            international_guidelines: []
+        },
+        funding_opportunities: [],
+        api_context_data: {
+            api: []
+        },
+        last_updated: new Date().toISOString()
+    };
 
     return (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in duration-300">
@@ -249,16 +301,26 @@ const PropertyAppraisalModal: React.FC<PropertyAppraisalModalProps> = ({
 
                 {/* Footer */}
                 <div className="p-4 bg-gray-50 dark:bg-gray-700/50 border-t border-gray-200 dark:border-gray-700 flex justify-end">
-                    <button
-                        onClick={onClose}
-                        className="px-4 py-2 bg-gray-200 hover:bg-gray-300 dark:bg-gray-600 dark:hover:bg-gray-500 text-gray-800 dark:text-gray-200 font-medium rounded-lg transition-colors"
+                    <PDFDownloadLink
+                        document={<ProjectReportPDF projectData={projectData} appraisalData={appraisalData} />}
+                        fileName="property-appraisal-report.pdf"
+                        className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white font-medium rounded-lg transition-colors flex items-center gap-2"
                     >
-                        Close
-                    </button>
+                        {({ blob, url, loading, error }) =>
+                            loading ? (
+                                "Loading document..."
+                            ) : (
+                                <>
+                                    <Download className="h-4 w-4" />
+                                    Download full report
+                                </>
+                            )
+                        }
+                    </PDFDownloadLink>
                 </div>
             </div>
         </div>
     );
 };
 
-export default PropertyAppraisalModal; 
+export default PropertyAppraisalModal;
