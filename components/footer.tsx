@@ -77,8 +77,11 @@ export function Footer() {
             </ul>
           </div>
         </div>
-        <div className="mt-8 pt-8 border-t border-gray-100 dark:border-gray-800 text-center text-sm text-gray-600 dark:text-gray-400">
-          © {currentYear} Filipino World. All rights reserved.
+
+        <div className="border-t border-gray-100 dark:border-gray-800 mt-8 pt-6 text-center">
+          <span className="text-gray-500 dark:text-gray-400 text-sm">
+            &copy; {currentYear} Filipino World. All rights reserved.
+          </span>
         </div>
       </div>
     </footer>

@@ -26,10 +26,73 @@ async function generateEmbedding(text: string): Promise<number[] | null> {
     }
 }
 
+// Function to perform regular text search
+async function performTextSearch(
+    collection: any,
+    query: string,
+    page: number,
+    limit: number
+): Promise<{ results: any[], total: number }> {
+    try {
+        // Text search query
+        const searchQuery = { searchableText: { $regex: query, $options: 'i' } };
+
+        // Count total results for pagination
+        const total = await collection.countDocuments(searchQuery);
+
+        // Skip value for pagination
+        const skip = (page - 1) * limit;
+
+        // Execute search with pagination
+        const results = await collection.find(
+            searchQuery,
+            {
+                projection: {
+                    _id: 0,
+                    id: 1,
+                    property_name: 1,
+                    property_description: 1,
+                    property_price: 1,
+                    property_address: 1,
+                    property_bedroom: 1,
+                    property_bathroom: 1,
+                    property_floor: 1,
+                    property_type: 1,
+                    property_subtype: 1,
+                    property_featured_photo: 1,
+                    property_photos_url: 1,
+                    property_location_geo_coordinates: 1,
+                    category: 1,
+                    searchType: { $literal: "text" } // Mark as text search result
+                }
+            }
+        ).skip(skip).limit(limit).toArray();
+
+        return { results, total };
+    } catch (error) {
+        console.error("Error in text search:", error);
+        return { results: [], total: 0 };
+    }
+}
+
+// Function to calculate pagination metadata
+function calculatePagination(page: number, limit: number, total: number) {
+    const totalPages = Math.ceil(total / limit);
+    return {
+        total,
+        page,
+        limit,
+        totalPages,
+        hasNextPage: page < totalPages,
+        hasPrevPage: page > 1
+    };
+}
+
 // GET handler for property search
 export async function GET(request: NextRequest): Promise<NextResponse> {
     const { searchParams } = new URL(request.url);
     const query = searchParams.get('q');
+    const page = parseInt(searchParams.get('page') || '1', 10);
     const limit = parseInt(searchParams.get('limit') || '10', 10);
     const minScore = parseFloat(searchParams.get('minScore') || '0.7'); // Default minimum score threshold
 
@@ -59,20 +122,20 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 
     try {
         await client.connect();
-        console.log("Connected to MongoDB for vector search");
+        console.log("Connected to MongoDB for combined search");
 
         const database = client.db(dbName);
         const collection = database.collection(collectionName);
 
-        // Perform vector search with score filtering
-        const results = await collection.aggregate([
+        // 1. Perform vector search first
+        const vectorResults = await collection.aggregate([
             {
                 $vectorSearch: {
                     index: "vector_index",
                     path: "embedding",
                     queryVector: queryEmbedding,
-                    numCandidates: limit * 20, // Increase candidates to ensure we have enough results after filtering
-                    limit: limit * 5 // Get more results initially to filter by score
+                    numCandidates: limit * 30,
+                    limit: limit * 5  // Get enough results but limit to avoid excessive results
                 }
             },
             {
@@ -90,34 +153,59 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
                     property_subtype: 1,
                     property_featured_photo: 1,
                     property_photos_url: 1,
+                    property_location_geo_coordinates: 1,
                     category: 1,
-                    score: { $meta: "vectorSearchScore" }
+                    score: { $meta: "vectorSearchScore" },
+                    searchType: { $literal: "vector" }
                 }
             },
             {
                 $match: {
-                    score: { $gte: minScore } // Filter results by minimum score
+                    score: { $gte: minScore }
                 }
-            },
-            {
-                $limit: limit // Apply final limit after filtering
             }
         ]).toArray();
 
-        // Log detailed score information
-        console.log(`Found ${results.length} results with score >= ${minScore}`);
-        console.log("--- Search Results Scores ---");
-        results.forEach((result, index) => {
-            console.log(`Result #${index + 1}: ${result.property_name} - Score: ${result.score.toFixed(4)}`);
-        });
-        console.log("---------------------------");
+        console.log(`Found ${vectorResults.length} vector results with score >= ${minScore}`);
+
+        // 2. Perform text search
+        const textSearchResults = await performTextSearch(collection, query, 1, limit * 2);
+        console.log(`Found ${textSearchResults.total} results from text search`);
+
+        // 3. Combine results and remove duplicates based on property id
+        const vectorIds = new Set(vectorResults.map(item => item.id));
+        const uniqueTextResults = textSearchResults.results.filter(item => !vectorIds.has(item.id));
+
+        // Combine vector and text results, prioritizing vector results
+        const combinedResults = [...vectorResults, ...uniqueTextResults];
+
+        // Total count of all unique results
+        const totalResults = combinedResults.length;
+        console.log(`Combined unique results: ${totalResults}`);
+
+        // Apply pagination to the combined results
+        const pagination = calculatePagination(page, limit, totalResults);
+        const startIndex = (page - 1) * limit;
+        const endIndex = Math.min(startIndex + limit, totalResults);
+        const paginatedResults = combinedResults.slice(startIndex, endIndex);
+
+        // Log info about the returned results
+        if (vectorResults.length > 0) {
+            console.log("--- Top Vector Search Results ---");
+            vectorResults.slice(0, 3).forEach((result, index) => {
+                console.log(`Result #${index + 1}: ${result.property_name} - Score: ${result.score?.toFixed(4) || 'N/A'}`);
+            });
+        }
 
         return NextResponse.json({
-            results,
+            results: paginatedResults,
+            pagination,
             metadata: {
                 query,
                 minScore,
-                totalResults: results.length
+                searchType: "combined",
+                vectorResultsCount: vectorResults.length,
+                textResultsCount: uniqueTextResults.length
             }
         });
 
@@ -131,115 +219,3 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
         await client.close();
     }
 }
-
-// POST handler for property search
-export async function POST(request: NextRequest): Promise<NextResponse> {
-    try {
-        const body = await request.json();
-        const { query, limit = 10, minScore = 0.5 } = body;
-
-        if (!query) {
-            return NextResponse.json(
-                { error: 'Search query is required' },
-                { status: 400 }
-            );
-        }
-
-        if (!uri) {
-            throw new Error("MongoDB connection string is not defined");
-        }
-
-        // Generate embedding for the search query
-        const queryEmbedding = await generateEmbedding(query);
-
-        if (!queryEmbedding) {
-            return NextResponse.json(
-                { error: 'Failed to generate embedding for the query' },
-                { status: 500 }
-            );
-        }
-
-        // Connect to MongoDB
-        const client = new MongoClient(uri);
-
-        try {
-            await client.connect();
-            console.log("Connected to MongoDB for vector search (POST)");
-
-            const database = client.db(dbName);
-            const collection = database.collection(collectionName);
-
-            // Perform vector search with score filtering
-            const results = await collection.aggregate([
-                {
-                    $vectorSearch: {
-                        index: "vector_index",
-                        path: "embedding",
-                        queryVector: queryEmbedding,
-                        numCandidates: limit * 20, // Increase candidates to ensure we have enough results after filtering
-                        limit: limit * 5 // Get more results initially to filter by score
-                    }
-                },
-                {
-                    $project: {
-                        _id: 0,
-                        id: 1,
-                        property_name: 1,
-                        property_description: 1,
-                        property_price: 1,
-                        property_address: 1,
-                        property_bedroom: 1,
-                        property_bathroom: 1,
-                        property_floor: 1,
-                        property_type: 1,
-                        property_subtype: 1,
-                        property_featured_photo: 1,
-                        property_photos_url: 1,
-                        category: 1,
-                        score: { $meta: "vectorSearchScore" }
-                    }
-                },
-                {
-                    $match: {
-                        score: { $gte: minScore } // Filter results by minimum score
-                    }
-                },
-                {
-                    $limit: limit // Apply final limit after filtering
-                }
-            ]).toArray();
-
-            // Log detailed score information
-            console.log(`Found ${results.length} results with score >= ${minScore}`);
-            console.log("--- Search Results Scores ---");
-            results.forEach((result, index) => {
-                console.log(`Result #${index + 1}: ${result.property_name} - Score: ${result.score.toFixed(4)}`);
-            });
-            console.log("---------------------------");
-
-            return NextResponse.json({
-                results,
-                metadata: {
-                    query,
-                    minScore,
-                    totalResults: results.length
-                }
-            });
-
-        } catch (error) {
-            console.error("Error searching properties:", error);
-            return NextResponse.json(
-                { error: 'Error searching properties' },
-                { status: 500 }
-            );
-        } finally {
-            await client.close();
-        }
-    } catch (error) {
-        console.error("Error parsing request:", error);
-        return NextResponse.json(
-            { error: 'Error parsing request' },
-            { status: 400 }
-        );
-    }
-} 

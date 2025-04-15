@@ -10,7 +10,7 @@ import 'mapbox-gl/dist/mapbox-gl.css';
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 
 export const metadata: Metadata = {
-  title: "Filipino World",
+  title: process.env.NEXT_PUBLIC_APP_NAME || "Filipino World",
   description:
     "Find your dream home in the Philippines. Browse properties, condos, houses, and lots.",
   keywords:
